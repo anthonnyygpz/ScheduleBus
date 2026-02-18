@@ -1,233 +1,262 @@
-import type { Employee, Schedule, AbsenceRecord, ShiftType } from "./types"
-import { generateSchedule, restructureForAbsence } from "./schedule-engine"
+import type { AbsenceRecord, Employee, Schedule, ScheduleEntry } from "./types";
+import { generateSchedule, restructureForAbsence } from "./schedule-engine";
 
 function generateId(): string {
-  return Math.random().toString(36).substring(2, 11)
+  return Math.random().toString(36).substring(2, 11);
+}
+export function getTuesday(d: Date): Date {
+  const date = new Date(d);
+  const day = date.getDay();
+  // Ajuste para encontrar el próximo martes (2) o el actual
+  const diff = date.getDate() - day + (day <= 2 ? 2 : 9);
+  const tuesday = new Date(date.setDate(diff));
+  tuesday.setHours(0, 0, 0, 0);
+  return tuesday;
 }
 
 const SAMPLE_EMPLOYEES: Employee[] = [
   {
     id: "emp1",
     name: "Carlos Martinez",
-    role: "Conductor Senior",
+    group: "A",
     email: "carlos.martinez@empresa.com",
     phone: "+52 5512345678",
-    skills: ["Conduccion", "Mantenimiento"],
-    maxHoursPerWeek: 48,
+    preferredRoutes: ["Ruta Norte", "Ruta Este"],
+    skills: ["Ruta Norte", "Ruta Este"],
+    active: true,
+    maxHoursPerDay: 10,
     availability: ["morning", "afternoon"],
   },
   {
     id: "emp2",
     name: "Maria Lopez",
-    role: "Conductora",
+    group: "B",
     email: "maria.lopez@empresa.com",
     phone: "+52 5523456789",
-    skills: ["Conduccion", "Atencion al cliente"],
-    maxHoursPerWeek: 40,
+    preferredRoutes: ["Ruta Sur", "Ruta Oeste"],
+    skills: ["Ruta Sur", "Ruta Oeste"],
+    active: true,
+    maxHoursPerDay: 8,
     availability: ["morning", "afternoon"],
   },
   {
     id: "emp3",
     name: "Juan Rodriguez",
-    role: "Conductor",
+    group: "C",
     email: "juan.rodriguez@empresa.com",
     phone: "+52 5534567890",
-    skills: ["Conduccion"],
-    maxHoursPerWeek: 48,
+    preferredRoutes: ["Ruta Este"],
+    skills: ["Ruta Este"],
+    active: true,
+    maxHoursPerDay: 6,
     availability: ["afternoon", "night"],
   },
   {
     id: "emp4",
     name: "Ana Garcia",
-    role: "Supervisora",
+    group: "A",
     email: "ana.garcia@empresa.com",
     phone: "+52 5545678901",
-    skills: ["Supervision", "Conduccion", "Logistica"],
-    maxHoursPerWeek: 40,
+    preferredRoutes: ["Ruta Norte", "Ruta Este", "Sur"],
+    skills: ["Ruta Norte", "Ruta Este", "Sur"],
+    active: true,
+    maxHoursPerDay: 10,
     availability: ["morning", "afternoon", "night"],
   },
   {
     id: "emp5",
     name: "Pedro Sanchez",
-    role: "Conductor",
+    group: "B",
     email: "pedro.sanchez@empresa.com",
     phone: "+52 5556789012",
-    skills: ["Conduccion", "Primeros auxilios"],
-    maxHoursPerWeek: 48,
+    preferredRoutes: ["Ruta Norte", "Ruta Sur"],
+    skills: ["Ruta Norte", "Ruta Sur"],
+    active: true,
+    maxHoursPerDay: 8,
     availability: ["morning", "night"],
   },
   {
     id: "emp6",
     name: "Laura Hernandez",
-    role: "Conductora Senior",
+    group: "B",
     email: "laura.hernandez@empresa.com",
     phone: "+52 5567890123",
-    skills: ["Conduccion", "Capacitacion"],
-    maxHoursPerWeek: 40,
+    skills: ["Ruta Norte", "Ruta Sur"],
+    preferredRoutes: ["Ruta Norte", "Ruta Sur"],
+    active: true,
+    maxHoursPerDay: 8,
     availability: ["morning", "afternoon"],
   },
   {
     id: "emp7",
     name: "Diego Torres",
-    role: "Conductor",
+    group: "C",
     email: "diego.torres@empresa.com",
     phone: "+52 5578901234",
-    skills: ["Conduccion"],
-    maxHoursPerWeek: 48,
+    skills: ["Ruta Sur", "Ruta Oeste"],
+    preferredRoutes: ["Ruta Sur", "Ruta Oeste"],
+    active: true,
+    maxHoursPerDay: 6,
     availability: ["afternoon", "night"],
   },
   {
     id: "emp8",
     name: "Sofia Ramirez",
-    role: "Conductora",
+    group: "B",
     email: "sofia.ramirez@empresa.com",
     phone: "+52 5589012345",
-    skills: ["Conduccion", "Atencion al cliente"],
-    maxHoursPerWeek: 40,
+    skills: ["Ruta Sur", "Ruta Oeste"],
+    preferredRoutes: ["Ruta Sur", "Ruta Oeste"],
+    active: true,
+    maxHoursPerDay: 8,
     availability: ["morning", "afternoon", "night"],
   },
   {
     id: "emp9",
     name: "Miguel Flores",
-    role: "Conductor",
+    group: "A",
     email: "miguel.flores@empresa.com",
     phone: "+52 5590123456",
-    skills: ["Conduccion", "Mantenimiento"],
-    maxHoursPerWeek: 48,
+    skills: ["Ruta Sur", "Ruta Oeste"],
+    preferredRoutes: ["Ruta Sur", "Ruta Oeste"],
+    active: true,
+    maxHoursPerDay: 10,
     availability: ["night", "morning"],
   },
   {
     id: "emp10",
     name: "Isabella Cruz",
-    role: "Supervisora",
+    group: "A",
     email: "isabella.cruz@empresa.com",
     phone: "+52 5501234567",
-    skills: ["Supervision", "Conduccion", "Logistica"],
-    maxHoursPerWeek: 40,
+    skills: ["Ruta Sur", "Ruta Oeste"],
+    preferredRoutes: ["Ruta Sur", "Ruta Oeste"],
+    active: true,
+    maxHoursPerDay: 10,
     availability: ["morning", "afternoon", "night"],
   },
   {
     id: "emp11",
-    name: "Roberto Diaz",
-    role: "Conductor",
-    email: "roberto.diaz@empresa.com",
-    phone: "+52 5512340001",
-    skills: ["Conduccion"],
-    maxHoursPerWeek: 48,
-    availability: ["morning", "afternoon"],
+    name: "Antonio Cruz",
+    group: "A",
+    email: "isabella.cruz@empresa.com",
+    phone: "+52 5501234567",
+    skills: ["Ruta Norte", "Ruta Este"],
+    preferredRoutes: ["Ruta Norte", "Ruta Este"],
+    active: true,
+    maxHoursPerDay: 10,
+    availability: ["morning", "afternoon", "night"],
   },
   {
     id: "emp12",
-    name: "Carmen Morales",
-    role: "Conductora",
-    email: "carmen.morales@empresa.com",
-    phone: "+52 5512340002",
-    skills: ["Conduccion", "Primeros auxilios"],
-    maxHoursPerWeek: 40,
-    availability: ["afternoon", "night"],
+    name: "Isabella Cruz",
+    group: "A",
+    email: "isabella.cruz@empresa.com",
+    phone: "+52 5501234567",
+    skills: ["Ruta Norte", "Ruta Este"],
+    preferredRoutes: ["Ruta Norte", "Ruta Este"],
+    active: true,
+    maxHoursPerDay: 10,
+    availability: ["morning", "afternoon", "night"],
   },
-]
+];
 
 // In-memory store (simulating database)
-let employees: Employee[] = [...SAMPLE_EMPLOYEES]
-let currentSchedule: Schedule | null = null
-let absences: AbsenceRecord[] = []
+let employees: Employee[] = [...SAMPLE_EMPLOYEES];
+let currentSchedule: Schedule | null = null;
+let absences: AbsenceRecord[] = [];
 
 // Initialize with a schedule for the current week
 function getMonday(d: Date): Date {
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  return new Date(d.setDate(diff))
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
 }
 
 function initializeSchedule() {
-  const monday = getMonday(new Date())
-  currentSchedule = generateSchedule(employees, monday)
+  const monday = getMonday(new Date());
+  currentSchedule = generateSchedule(employees, monday);
 
-  // Simulate some active/completed entries for today
-  const today = new Date().toISOString().split("T")[0]
-  const now = new Date()
-  const currentHour = now.getHours()
+  const todayStr = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   currentSchedule.entries = currentSchedule.entries.map((entry) => {
-    if (entry.date === today) {
-      const [startH] = entry.startTime.split(":").map(Number)
-      const [endH] = entry.endTime.split(":").map(Number)
+    // Si la fecha es anterior a hoy, marcar como completado
+    if (entry.date < todayStr) {
+      return { ...entry, status: "completed" as const, progress: 100 };
+    }
 
-      if (entry.shift === "night") {
-        if (currentHour >= 22 || currentHour < 6) {
-          return { ...entry, status: "active" as const, progress: Math.floor(Math.random() * 60) + 20 }
-        }
-        return currentHour >= 6 ? { ...entry, status: "completed" as const, progress: 100 } : entry
+    // Lógica para el día de hoy
+    if (entry.date === todayStr) {
+      const [startH, startM] = entry.startTime.split(":").map(Number);
+      const [endH, endM] = entry.endTime.split(":").map(Number);
+
+      const startTotal = startH * 60 + startM;
+      let endTotal = endH * 60 + endM;
+
+      // Manejo de turnos que cruzan la medianoche
+      if (endTotal < startTotal) endTotal += 1440;
+
+      if (currentMinutes >= startTotal && currentMinutes < endTotal) {
+        const totalDuration = endTotal - startTotal;
+        const elapsed = currentMinutes - startTotal;
+        const progress = Math.min(
+          98,
+          Math.round((elapsed / totalDuration) * 100),
+        );
+        return { ...entry, status: "active" as const, progress };
       }
 
-      if (currentHour >= startH && currentHour < endH) {
-        const total = endH - startH
-        const elapsed = currentHour - startH
-        const progress = Math.min(95, Math.round((elapsed / total) * 100) + Math.floor(Math.random() * 10))
-        return { ...entry, status: "active" as const, progress }
-      }
-
-      if (currentHour >= endH) {
-        return { ...entry, status: "completed" as const, progress: 100 }
+      if (currentMinutes >= endTotal) {
+        return { ...entry, status: "completed" as const, progress: 100 };
       }
     }
 
-    if (entry.date < today) {
-      return { ...entry, status: "completed" as const, progress: 100 }
-    }
-
-    return entry
-  })
+    return entry;
+  });
 }
 
-initializeSchedule()
+initializeSchedule();
 
 // Store API
+
 export const store = {
-  getEmployees: (): Employee[] => [...employees],
+  getEmployees: () => [...employees],
 
-  addEmployee: (emp: Omit<Employee, "id">): Employee => {
-    const newEmp = { ...emp, id: generateId() }
-    employees.push(newEmp)
-    return newEmp
+  addEmployee: (emp: Omit<Employee, "id">) => {
+    const newEmp = { ...emp, id: generateId() };
+    employees.push(newEmp);
+    return newEmp;
   },
 
-  addEmployees: (newEmployees: Omit<Employee, "id">[]): Employee[] => {
-    const created = newEmployees.map((emp) => ({
-      ...emp,
-      id: generateId(),
-    }))
-    employees.push(...created)
-    return created
+  removeEmployee: (id: string) => {
+    employees = employees.filter((e) => e.id !== id);
   },
 
-  removeEmployee: (id: string): void => {
-    employees = employees.filter((e) => e.id !== id)
-  },
+  getSchedule: () => currentSchedule,
 
-  getSchedule: (): Schedule | null => currentSchedule,
-
+  /**
+   * Genera y guarda el nuevo horario en el estado global del store
+   */
   generateNewSchedule: (weekStart?: Date): Schedule => {
-    const start = weekStart || getMonday(new Date())
-    currentSchedule = generateSchedule(employees, start)
-    return currentSchedule
+    const start = weekStart || getMonday(new Date());
+    const newSchedule = generateSchedule(employees, start);
+    currentSchedule = newSchedule; // IMPORTANTE: Actualizar la referencia global
+    return newSchedule;
   },
 
-  reportAbsence: (
-    employeeId: string,
-    date: string,
-    reason: string
-  ): { absence: AbsenceRecord; replacements: Array<{ originalEntry: import("./types").ScheduleEntry; replacementId: string }> } | null => {
-    if (!currentSchedule) return null
+  reportAbsence: (employeeId: string, date: string, reason: string) => {
+    if (!currentSchedule) return null;
 
     const { updatedSchedule, replacements } = restructureForAbsence(
       currentSchedule,
       employeeId,
       date,
-      employees
-    )
-    currentSchedule = updatedSchedule
+      employees,
+    );
+
+    currentSchedule = updatedSchedule;
 
     const absence: AbsenceRecord = {
       id: generateId(),
@@ -237,28 +266,26 @@ export const store = {
       replacementId: replacements[0]?.replacementId,
       originalEntryId: replacements[0]?.originalEntry.id || "",
       createdAt: new Date().toISOString(),
-    }
-    absences.push(absence)
+    };
 
-    return { absence, replacements }
+    absences.push(absence);
+    return { absence, replacements };
   },
 
-  getAbsences: (): AbsenceRecord[] => [...absences],
+  setSchedule: (schedule: Schedule) => {
+    currentSchedule = schedule;
+  },
+  getAbsences: () => [...absences],
 
-  getEmployeeById: (id: string): Employee | undefined =>
-    employees.find((e) => e.id === id),
-
-  getActiveEntries: (): import("./types").ScheduleEntry[] => {
-    if (!currentSchedule) return []
-    const today = new Date().toISOString().split("T")[0]
-    return currentSchedule.entries.filter(
-      (e) => e.date === today && (e.status === "active" || e.status === "scheduled")
-    )
+  getActiveEntries: (): ScheduleEntry[] => {
+    if (!currentSchedule) return [];
+    const today = new Date().toISOString().split("T")[0];
+    return currentSchedule.entries.filter((e) => e.date === today);
   },
 
-  resetToSample: (): void => {
-    employees = [...SAMPLE_EMPLOYEES]
-    initializeSchedule()
-    absences = []
+  resetToSample: () => {
+    employees = [...SAMPLE_EMPLOYEES];
+    absences = [];
+    initializeSchedule();
   },
-}
+};
