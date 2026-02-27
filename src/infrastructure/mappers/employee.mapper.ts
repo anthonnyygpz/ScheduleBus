@@ -1,5 +1,7 @@
-import { EmployeeRequestDto } from "@/application/dtos/employee.dto";
-import { EmployeeResponseDto } from "@/application/use-cases/get-employees/get-employees.dto";
+import {
+  EmployeeRequestDto,
+  EmployeeResponseDto,
+} from "@/application/dtos/employee.dto";
 import { Employee } from "@/core/entities/employee.type";
 
 export class EmployeeMapper {

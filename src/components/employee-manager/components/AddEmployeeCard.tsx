@@ -9,7 +9,7 @@ import { useCreateEmployee } from "../hooks/useCreateEmployee";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Controller } from "react-hook-form";
 import { useRoutes } from "@/components/route-manager";
-import { useGroup } from "@/components/group-manager/hooks/useGroup";
+import { useGroups } from "@/components/group-manager/hooks/useGroups";
 import {
   Select,
   SelectContent,
@@ -27,7 +27,7 @@ export const AddEmployeeCard: React.FC<Props> = ({ onCloseForm }) => {
     useCreateEmployee();
 
   const { routeOptions } = useRoutes();
-  const { groupOptions } = useGroup();
+  const { groupOptions } = useGroups();
 
   return (
     <Card className="bg-card border border-primary/30">

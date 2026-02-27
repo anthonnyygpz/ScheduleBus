@@ -47,7 +47,7 @@ export function AppHeader({ activeTab, onTabChange }: AppHeaderProps) {
                 "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors 2xl:text-sm 2xl:px-4 2xl:py-2",
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer",
               )}
             >
               <tab.icon className="h-3.5 w-3.5 2xl:h-4 2xl:w-4" />

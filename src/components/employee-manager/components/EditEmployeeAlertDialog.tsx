@@ -1,4 +1,8 @@
+"use client";
+
 import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import { useGroups } from "@/components/group-manager";
+import { useRoutes } from "@/components/route-manager/hooks/useRoutes";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,10 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit } from "lucide-react";
-import { useUpdateEmployee } from "../hooks/useUpdateEmployee";
-import { useRoutes } from "@/components/route-manager/hooks/useRoutes";
-import { Controller } from "react-hook-form";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -22,17 +23,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGroup } from "@/components/group-manager";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { Edit } from "lucide-react";
+import { Controller } from "react-hook-form";
+import { useUpdateEmployee } from "../hooks/useUpdateEmployee";
 
 interface Props {
   employee?: EmployeeResponseDto;
 }
 
 export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
-  const { register, handleSubmit, control } = useUpdateEmployee(employee);
+  const {
+    register,
+    handleSubmit,
+    onSubmit,
+    control,
+    formState: { isSubmitting },
+    reset,
+  } = useUpdateEmployee(employee);
   const { routeOptions } = useRoutes();
-  const { groupOptions } = useGroup();
+  const { groupOptions } = useGroups();
 
   if (!employee) return null;
 
@@ -51,7 +60,11 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
         <AlertDialogHeader>
           <AlertDialogTitle>Editar empleado</AlertDialogTitle>
 
-          <form onSubmit={handleSubmit} id="edit-employee">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            id="edit-employee"
+            className="flex flex-col gap-2"
+          >
             <div className="space-y-1">
               <Label
                 htmlFor="name"
@@ -61,7 +74,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
                 Nombre completo
               </Label>
               <Input
-                className="text-sm text-muted-foreground"
+                className="text-sm text-foreground"
                 {...register("name")}
               />
             </div>
@@ -79,10 +92,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
                 control={control}
                 rules={{ required: "El grupo es obligatorio" }}
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona un grupo..." />
                     </SelectTrigger>
@@ -107,7 +117,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
                 Numero de telefono
               </Label>
               <Input
-                className="text-sm text-muted-foreground"
+                className="text-sm text-foreground"
                 placeholder="123456789"
                 {...register("phone")}
               />
@@ -121,7 +131,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
                 Correo Electronico
               </Label>
               <Input
-                className="text-sm text-muted-foreground"
+                className="text-sm text-foreground"
                 placeholder="ejemplo@ejemplo.com"
                 {...register("email")}
               />
@@ -132,7 +142,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
                 className="text-xs text-foreground"
                 title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
               >
-                Correo Electronico
+                Rutas
               </Label>
               <Controller
                 name="routeIds"
@@ -150,12 +160,20 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
           </form>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction className="bg-transparent hover:bg-destructive">
+          <AlertDialogAction
+            onClick={() => reset()}
+            className="bg-muted text-foreground hover:bg-muted/80"
+          >
             Cancelar
           </AlertDialogAction>
           <AlertDialogAction asChild>
-            <Button form="edit-employee" type="submit" variant="destructive">
-              Guardar
+            <Button
+              type="submit"
+              form="edit-employee"
+              variant="destructive"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Guardando..." : "Guardar"}
             </Button>
           </AlertDialogAction>
         </AlertDialogFooter>

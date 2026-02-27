@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { LiveDashboard } from "@/components/live-dashboard";
-import { ScheduleView } from "@/components/schedule-view";
+import { ScheduleView } from "@/components/schedule-manager";
 import { EmployeeManager } from "@/components/employee-manager";
 import { AbsenceManager } from "@/components/absence-manager";
 

@@ -5,25 +5,32 @@ import {
   EmployeeResponseDto,
 } from "@/application/dtos/employee.dto";
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 
 export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
   const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    control,
-    reset,
-  } = useForm<EmployeeRequestDto>({
+  const form = useForm<EmployeeRequestDto>({
     defaultValues: {
-      name: employee?.name || "",
-      email: employee?.email || "",
-      phone: employee?.phone || "",
-      groupId: employee?.group.id.toString() || "",
-      routeIds: employee?.routes.map((r) => r.id.toString()) || [],
+      name: "",
+      email: "",
+      phone: "",
+      groupId: "",
+      routeIds: [],
     },
   });
+
+  useEffect(() => {
+    if (employee) {
+      form.reset({
+        name: employee.name,
+        email: employee.email,
+        phone: employee.phone,
+        groupId: employee.group.id.toString(),
+        routeIds: employee.routes.map((r) => r.id.toString()),
+      });
+    }
+  }, [employee, form]);
 
   const onSubmit = async (data: EmployeeRequestDto) => {
     if (!employee?.id) {
@@ -54,7 +61,7 @@ export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
         throw new Error(errorData.message || "Error al crear el empleado");
       }
       await mutate("/api/employees");
-      reset();
+      form.reset();
 
       toast({
         title: "Empleado actualizado exitosamente",
@@ -73,11 +80,7 @@ export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
   };
 
   return {
-    register,
-    handleSubmit: handleSubmit(onSubmit),
-    isSubmitting,
-    errors,
-    control,
-    reset,
+    ...form,
+    onSubmit,
   };
 };

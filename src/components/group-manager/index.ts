@@ -1,1 +1,1 @@
-export { useGroup } from "./hooks/useGroup";
+export { useGroups } from "./hooks/useGroups";

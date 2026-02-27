@@ -14,5 +14,5 @@ export const useRoutes = () => {
     label: ruta.name,
   }));
 
-  return { routeOptions, error, isLoading };
+  return { data, routeOptions, error, isLoading };
 };

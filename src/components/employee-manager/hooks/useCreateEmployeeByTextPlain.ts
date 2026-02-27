@@ -23,7 +23,7 @@ export const useCreateEmployeeByTextPlain = () => {
           data: {
             name: data.name,
             email: data.email,
-            phone: `+52 ${data.phone}`,
+            phone: data.phone,
             groupId: data.groupId,
             routeIds: data.routeIds,
           },
