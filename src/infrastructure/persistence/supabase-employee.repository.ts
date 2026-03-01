@@ -4,10 +4,10 @@ import { Employee } from "@/core/entities/employee.type";
 import { EmployeeRepository } from "@/application/repositories/employee.repository";
 
 export class SupbaseEmployeeRepository implements EmployeeRepository {
-  async findAll(): Promise<Employee[]> {
+  async findAll(search?: string): Promise<Employee[]> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("employees")
       .select(
         `
@@ -21,7 +21,13 @@ export class SupbaseEmployeeRepository implements EmployeeRepository {
       )
       .neq("status", "deleted");
 
-    if (error) {
+    if (search) {
+      query = query.or(`name.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error !== null) {
       console.error("[Database Error]:", error);
       throw new Error(
         "No se pudieron obtener los empleados. Inténtelo más tarde.",

@@ -5,8 +5,8 @@ import { EmployeeMapper } from "@/infrastructure/mappers/employee.mapper";
 export class GetEmployeesUseCase {
   constructor(private employeeRepo: EmployeeRepository) {}
 
-  async execute(): Promise<EmployeeResponseDto[]> {
-    const employees = await this.employeeRepo.findAll();
+  async execute(search?: string): Promise<EmployeeResponseDto[]> {
+    const employees = await this.employeeRepo.findAll(search);
 
     return employees.map((employee) => EmployeeMapper.toResponseDto(employee));
   }

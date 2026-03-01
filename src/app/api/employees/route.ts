@@ -2,10 +2,23 @@ import { NextResponse } from "next/server";
 import { getDependencies } from "@/infrastructure/dependencies";
 import { EmployeeRequestDto } from "@/application/dtos/employee.dto";
 
-export async function GET() {
-  const { getEmployeesUseCase } = await getDependencies();
-  const employees = await getEmployeesUseCase.execute();
-  return NextResponse.json(employees);
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || undefined;
+
+    const { getEmployeesUseCase } = await getDependencies();
+
+    const employees = await getEmployeesUseCase.execute(search);
+
+    return NextResponse.json(employees);
+  } catch (error) {
+    console.error("[API GET Error]:", error);
+    return NextResponse.json(
+      { error: "Error al obtener empleados" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
