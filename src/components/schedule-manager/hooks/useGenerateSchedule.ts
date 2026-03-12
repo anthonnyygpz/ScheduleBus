@@ -19,10 +19,18 @@ export const useGenerateSchedule = (weekOffset: number) => {
         }),
       });
 
-      if (!response.ok) throw new Error("Error al generar");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.details ||
+            errorData.error ||
+            "Error HTTP al generar el horario",
+        );
+      }
+
       await mutate("/api/schedule");
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("[useGenerateSchedule Error]:", err.message);
     } finally {
       setIsGenerating(false);
     }

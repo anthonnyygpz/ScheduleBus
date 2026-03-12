@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 import { LayoutGrid, Users } from "lucide-react";
 import { useGroups } from "../group-manager";
 import { useRoutes } from "../route-manager";
@@ -44,13 +44,20 @@ export function ScheduleView() {
     setSearchQuery(e.target.value);
   };
 
+  const isTimeInRange = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const totalMinutes = hours * 60 + minutes;
+    const startRange = 5 * 60 + 30; // 05:30
+    const endRange = 22 * 60; // 22:00
+    return totalMinutes >= startRange && totalMinutes <= endRange;
+  };
+
   if (error) return <ErrorText>Error al cargar datos</ErrorText>;
   if (isLoading) return <Loading>Cargando Horarios...</Loading>;
+
   return (
     <div className="flex h-full flex-col gap-4">
       <ToolbarSchedule schedule={schedule} groups={groups} />
-
-      {/* Cards de Grupos */}
       <GroupCards />
 
       <Tabs
@@ -76,7 +83,7 @@ export function ScheduleView() {
                 Horario de Rutas - ShiftFlow
               </h1>
               <p className="text-sm">
-                Semana del {startDate.toLocaleDateString()} al {days[6].label}
+                Semana del {startDate.toLocaleDateString()} al {days[6]?.label}
               </p>
             </div>
 
@@ -104,13 +111,39 @@ export function ScheduleView() {
                             {route.label}
                           </TableCell>
                           {days.map((day) => {
-                            const dayEntries = routeData?.get(day.iso) || [];
+                            const dayEntries = (
+                              routeData?.get(day.iso) || []
+                            ).filter((e) => isTimeInRange(e.startTime));
+
                             const totalHours = dayEntries.reduce(
                               (sum, e) =>
                                 sum + (groupsMap[e.group]?.hours || 0),
                               0,
                             );
-                            const isComplete = totalHours >= 24;
+
+                            // Meta original: 16.5h (5:30 AM a 10:00 PM).
+                            // Meta ajustada: 16.0h (16.5h - 0.5h de descanso)
+                            const targetHours = 16.0;
+                            const isComplete = totalHours >= targetHours;
+                            const remainingHours = Math.max(
+                              0,
+                              targetHours - totalHours,
+                            );
+
+                            const renderRemainingTime = () => {
+                              if (isComplete) return "Cubierto";
+
+                              if (remainingHours === 0.5) {
+                                return "Faltan: 30m";
+                              }
+
+                              if (remainingHours % 1 !== 0) {
+                                const h = Math.floor(remainingHours);
+                                return `Faltan: ${h}h 30m`;
+                              }
+
+                              return `Faltan: ${remainingHours}h`;
+                            };
 
                             return (
                               <TableCell
@@ -139,6 +172,7 @@ export function ScheduleView() {
                                       </div>
                                     </div>
                                   ))}
+
                                   {dayEntries.length > 0 && (
                                     <div
                                       className={cn(
@@ -148,9 +182,7 @@ export function ScheduleView() {
                                           : "bg-destructive/10 border-destructive text-destructive",
                                       )}
                                     >
-                                      {isComplete
-                                        ? "Completa"
-                                        : `Faltan ${24 - totalHours}h`}
+                                      {renderRemainingTime()}
                                     </div>
                                   )}
                                 </div>
@@ -172,15 +204,6 @@ export function ScheduleView() {
           className="flex-1 overflow-auto rounded-xl border bg-card"
         >
           <div className="bg-card p-4">
-            <div className="hidden print:block mb-4">
-              <h1 className="text-xl font-bold">
-                Horario de Empleados - ShiftFlow
-              </h1>
-              <p className="text-sm">
-                Semana del {startDate.toLocaleDateString()} al {days[6].label}
-              </p>
-            </div>
-
             <div className="mb-4">
               <Input
                 onChange={handleSearchQuery}
@@ -188,7 +211,6 @@ export function ScheduleView() {
                 className="w-full"
               />
             </div>
-
             <TableEmployeeSchedule
               employees={employees}
               groupsMap={groupsMap}

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 
 export interface InputProps extends React.ComponentProps<"input"> {
   helperText?: string;

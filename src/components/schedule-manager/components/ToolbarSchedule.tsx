@@ -21,7 +21,7 @@ import { useTableSchedule } from "../hooks/useTableSchedule";
 import { useGenerateSchedule } from "../hooks/useGenerateSchedule";
 import { useState } from "react";
 import { ScheduleResponseDto } from "@/application/dtos/schedule.dto";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 import { useScheduleDerivedData } from "../hooks/useScheduleDerivedData";
 import { GroupResponseDto } from "@/application/dtos/group.dto";
 

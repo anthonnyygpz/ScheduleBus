@@ -9,11 +9,18 @@ import { SupabaseGroupRepository } from "./persistence/supabase-group.repository
 import { SupabaseScheduleRepository } from "./persistence/supabase-schedule.repository";
 import { GenerateScheduleUseCase } from "@/application/use-cases/schedule/generate-schedule.use-case";
 import { GetScheduleUseCase } from "@/application/use-cases/schedule/get-schedule.use-case";
+import { LiveScheduleUseCase } from "@/application/use-cases/schedule/live-schedule.use-case";
+import { ScheduleEngine } from "@/core/logic/schedule-engine";
+import { StaticRecipeProvider } from "./persistence/static-recipe-provider.repository";
+import { RandomShuffler } from "./persistence/random-shuffler.repository";
 
 const employeeRepo = new SupbaseEmployeeRepository();
 const routeRepo = new SupabaseRouteRepository();
 const groupRepo = new SupabaseGroupRepository();
 const scheduleRepo = new SupabaseScheduleRepository();
+const recipeProvider = new StaticRecipeProvider();
+const shuffler = new RandomShuffler();
+const scheduleEngine = new ScheduleEngine(recipeProvider, shuffler);
 
 const getEmployeesUseCase = new GetEmployeesUseCase(employeeRepo);
 const getRoutesUseCase = new GetRoutesUseCase(routeRepo);
@@ -24,9 +31,11 @@ const generateScheduleUseCase = new GenerateScheduleUseCase(
   employeeRepo,
   routeRepo,
   scheduleRepo,
+  scheduleEngine,
   () => crypto.randomUUID(),
 );
 const getScheduleUseCase = new GetScheduleUseCase(scheduleRepo);
+const liveScheduleUseCase = new LiveScheduleUseCase(scheduleRepo);
 
 export const getDependencies = async () => {
   return {
@@ -37,5 +46,6 @@ export const getDependencies = async () => {
     getGroupsUseCase,
     generateScheduleUseCase,
     getScheduleUseCase,
+    liveScheduleUseCase,
   };
 };

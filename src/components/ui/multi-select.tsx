@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 
 interface MultiSelectProps {
   options: { value: string; label: string; email?: string }[];

@@ -1,22 +1,38 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, X } from "lucide-react";
+import { Search, UserPlus, X, Filter } from "lucide-react";
 import { Input } from "../../ui/input";
-import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import {
+  EmployeeFiltersDto,
+  EmployeeResponseDto,
+} from "@/application/dtos/employee.dto";
+import { Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
+import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
 
 interface Props {
   employees: EmployeeResponseDto[];
-  handleSearch: (e: React.ChangeEvent<HTMLInputElement> | "") => void;
-  searchQuery: string;
   handleShowForm: (bool: boolean) => void;
+  isSearching: boolean;
+  handleFilters: (filters: EmployeeFiltersDto) => void;
+  filters: EmployeeFiltersDto;
 }
 
 const ToolbarEmployee: React.FC<Props> = ({
   employees,
-  handleSearch,
-  searchQuery,
   handleShowForm,
+  isSearching,
+  filters,
+  handleFilters,
 }) => {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -30,26 +46,89 @@ const ToolbarEmployee: React.FC<Props> = ({
       </div>
 
       <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Estado</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuCheckboxItem
+                checked={filters.status === "active"}
+                onCheckedChange={(checked) =>
+                  handleFilters({
+                    ...filters,
+                    status: checked ? "active" : "inactive",
+                  })
+                }
+              >
+                Activos
+              </DropdownMenuCheckboxItem>
+
+              <DropdownMenuCheckboxItem
+                checked={filters.status === "inactive"}
+                onCheckedChange={(checked) =>
+                  handleFilters({
+                    ...filters,
+                    status: checked ? "inactive" : "active",
+                  })
+                }
+              >
+                Inactivos
+              </DropdownMenuCheckboxItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Ordenar por</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuRadioGroup
+                value={filters.orderBy}
+                onValueChange={(value) =>
+                  handleFilters({ ...filters, orderBy: value })
+                }
+              >
+                <DropdownMenuRadioItem value="name">
+                  Nombre
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="id">
+                  Numero de empleado
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <div className="flex-1 sm:w-64 md:w-80">
           <Input
-            onChange={handleSearch}
+            onChange={(e) =>
+              handleFilters({ ...filters, search: e.target.value })
+            }
             placeholder="Buscar empleado..."
             className="w-full"
-            value={searchQuery}
+            value={filters.search}
             type="search"
             autoComplete="off"
             autoCorrect="off"
             spellCheck="false"
             startAdornment={
-              <Search className="h-3.5 w-3.5 text-muted-foreground" />
+              isSearching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+              ) : (
+                <Search className="h-3.5 w-3.5 text-muted-foreground" />
+              )
             }
             endAdornment={
-              searchQuery.length > 0 && (
+              filters?.search!.length > 0 &&
+              !isSearching && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleSearch("")}
-                  className="text-xs cursor-pointer"
+                  onClick={() => handleFilters({ ...filters, search: "" })}
+                  className="text-xs cursor-pointer h-7 w-7 p-0"
                 >
                   <X className="h-3.5 w-3.5" />
                 </Button>

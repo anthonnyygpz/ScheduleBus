@@ -3,6 +3,8 @@ import {
   EmployeeResponseDto,
 } from "@/application/dtos/employee.dto";
 import { Employee } from "@/core/entities/employee.type";
+import { PaginatedEmployeeResponseDto } from "@/application/dtos/employee.dto";
+import { EmployeeFiltersDto } from "@/application/dtos/employee.dto";
 
 export class EmployeeMapper {
   static toMap(raw: any): Employee {
@@ -52,6 +54,23 @@ export class EmployeeMapper {
       phone: entity.phone,
       group: entity.group,
       routes: entity.routes,
+    });
+  }
+
+  static toPaginatedResponseDto(
+    entities: Employee[],
+    filters?: EmployeeFiltersDto,
+  ): PaginatedEmployeeResponseDto {
+    const total = entities.length;
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 20;
+    const offset = (page - 1) * limit;
+    const from = offset + 1;
+    const to = offset + entities.length;
+
+    return new PaginatedEmployeeResponseDto({
+      metadata: { total, page, limit, offset, from, to },
+      data: entities.map((entity) => EmployeeMapper.toResponseDto(entity)),
     });
   }
 }

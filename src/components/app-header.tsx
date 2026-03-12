@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 
 interface AppHeaderProps {
   activeTab: string;

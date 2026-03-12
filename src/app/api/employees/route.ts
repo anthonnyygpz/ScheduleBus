@@ -1,15 +1,34 @@
 import { NextResponse } from "next/server";
 import { getDependencies } from "@/infrastructure/dependencies";
-import { EmployeeRequestDto } from "@/application/dtos/employee.dto";
+import {
+  EmployeeFiltersDto,
+  EmployeeRequestDto,
+} from "@/application/dtos/employee.dto";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || undefined;
+    const groupId = searchParams.get("groupId") || undefined;
+    const limit = searchParams.get("limit") || undefined;
+    const page = searchParams.get("page") || undefined;
+    const orderBy = searchParams.get("orderBy") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const ascending = searchParams.get("ascending") || undefined;
 
     const { getEmployeesUseCase } = await getDependencies();
 
-    const employees = await getEmployeesUseCase.execute(search);
+    const filters: EmployeeFiltersDto = {
+      search: search,
+      limit: parseInt(limit ?? "20"),
+      page: parseInt(page ?? "1"),
+      status: status,
+      orderBy: orderBy,
+      ascending: ascending?.toString() === "true" ? true : false,
+      groupId: parseInt(groupId ?? ""),
+    };
+
+    const employees = await getEmployeesUseCase.execute(filters);
 
     return NextResponse.json(employees);
   } catch (error) {

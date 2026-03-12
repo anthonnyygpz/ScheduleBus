@@ -1,33 +1,17 @@
 import { NextResponse } from "next/server";
-import { store } from "@/lib/store";
-// import { calculateProgress } from "@/lib/schedule-engine";
+import { getDependencies } from "@/infrastructure/dependencies";
 
 export async function GET() {
-  // const schedule = store.getSchedule();
-  // const employees = store.getEmployees();
+  try {
+    const { liveScheduleUseCase } = await getDependencies();
+    const todayEntries = await liveScheduleUseCase.execute();
 
-  // if (!schedule) {
-  //   return NextResponse.json({ entries: [], employees: [] });
-  // }
-
-  const today = new Date().toISOString().split("T")[0];
-
-  // const todayEntries = schedule.entries
-  //   .filter((e) => e.date === today)
-  //   .map((entry) => {
-  //     const progress = calculateProgress(entry);
-  //     const employee = employees.find((emp) => emp.id === entry.employeeId);
-  //
-  //     return {
-  //       ...entry,
-  //       progress,
-  //       employeeName: employee?.name || "Desconocido",
-  //       employeeGroup: employee?.group || "N/A",
-  //     };
-  //   });
-
-  return NextResponse.json({
-    // entries: todayEntries,
-    timestamp: new Date().toISOString(),
-  });
+    return NextResponse.json(todayEntries);
+  } catch (error) {
+    console.error("[API GET REALTIME]:", error);
+    return NextResponse.json(
+      { error: "Excepción en el servidor" },
+      { status: 500 },
+    );
+  }
 }

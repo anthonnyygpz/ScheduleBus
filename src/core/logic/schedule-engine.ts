@@ -1,15 +1,16 @@
 import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import { RecipeProviderRepository } from "@/application/repositories/recipe-provider.repository";
+import { ShufflerRepository } from "@/application/repositories/shuffler.repository";
 import { ScheduleEntry } from "../entities/schedule.type";
 import { IRoute } from "../entities/types.type";
 
 export class ScheduleEngine {
-  private static readonly RECIPES = [
-    ["A", "B", "C"],
-    ["B", "B", "B"],
-    ["C", "C", "C", "C"],
-  ];
+  constructor(
+    private readonly recipeProvider: RecipeProviderRepository,
+    private readonly shuffler: ShufflerRepository,
+  ) {}
 
-  static generateWeeklyEntries(
+  public generateWeeklyEntries(
     employees: EmployeeResponseDto[],
     routes: IRoute[],
     weekStart: Date,
@@ -22,11 +23,9 @@ export class ScheduleEngine {
       currentDate.setDate(weekStart.getDate() + i);
       const dateStr = currentDate.toISOString().split("T")[0];
 
-      // Seguimiento de quién trabajó HOY (Equivalente a e.assigned_today en Python)
       const assignedToday = new Set<number>();
 
-      // Barajamos rutas para evitar sesgos (como en Python)
-      const shuffledRoutes = [...routes].sort(() => Math.random() - 0.5);
+      const shuffledRoutes = this.shuffler.shuffle([...routes]);
 
       shuffledRoutes.forEach((route) => {
         const team = this.getValidTeamForRoute(employees, route, assignedToday);
@@ -36,21 +35,22 @@ export class ScheduleEngine {
 
           team.forEach((employee) => {
             const startH = currentHourOffset;
-            const endH = (startH + employee.group.hours) % 24;
+            const endH = (startH + employee.group.hours) % 16;
 
-            entries.push({
-              id: idGenerator(),
-              employeeId: employee.id.toString(),
-              employeeName: employee.name,
-              group: employee.group.name as any,
-              date: dateStr,
-              shift: this.getShiftType(startH), // Determina mañana/tarde/noche
-              startTime: `${startH.toString().padStart(2, "0")}:00`,
-              endTime: `${endH.toString().padStart(2, "0")}:00`,
-              route: route.name,
-              status: "scheduled",
-              progress: 0,
-            });
+            entries.push(
+              new ScheduleEntry(
+                idGenerator(),
+                employee.id.toString(),
+                employee.name,
+                employee.group.name,
+                dateStr,
+                `${startH.toString().padStart(2, "0")}:00`,
+                `${endH.toString().padStart(2, "0")}:00`,
+                route.name,
+                "scheduled",
+                0,
+              ),
+            );
 
             assignedToday.add(employee.id);
             currentHourOffset += employee.group.hours;
@@ -62,39 +62,40 @@ export class ScheduleEngine {
     return entries;
   }
 
-  private static getValidTeamForRoute(
+  private getValidTeamForRoute(
     employees: EmployeeResponseDto[],
     route: IRoute,
     assignedToday: Set<number>,
   ): EmployeeResponseDto[] {
-    // Barajamos recetas para rotación de personal
-    const shuffledRecipes = [...this.RECIPES].sort(() => Math.random() - 0.5);
+    const recipes = this.recipeProvider.getRecipes();
+    const shuffledRecipes = this.shuffler.shuffle([...recipes]);
 
     for (const recipe of shuffledRecipes) {
       const tentativeTeam: EmployeeResponseDto[] = [];
 
       for (const requiredGroupName of recipe) {
-        // Prioridad 1: Empleado con afinidad a la ruta (como en Python)
         let candidate = employees.find(
           (e) =>
             e.group.name === requiredGroupName &&
             !assignedToday.has(e.id) &&
-            !tentativeTeam.includes(e) &&
+            !tentativeTeam.some((t) => t.id === e.id) && // Comparación más segura por ID
             e.routes.some((r) => r.id === route.id),
         );
 
-        // Prioridad 2: Cualquier empleado disponible del grupo requerido
         if (!candidate) {
           candidate = employees.find(
             (e) =>
               e.group.name === requiredGroupName &&
               !assignedToday.has(e.id) &&
-              !tentativeTeam.includes(e),
+              !tentativeTeam.some((t) => t.id === e.id),
           );
         }
 
-        if (candidate) tentativeTeam.push(candidate);
-        else break; // Si falta alguien de la receta, probamos con la siguiente receta
+        if (candidate) {
+          tentativeTeam.push(candidate);
+        } else {
+          break; // Rompe temprano si falta un eslabón de la receta
+        }
       }
 
       if (tentativeTeam.length === recipe.length) {
@@ -102,12 +103,6 @@ export class ScheduleEngine {
       }
     }
 
-    return []; // No se pudo cubrir la ruta hoy
-  }
-
-  private static getShiftType(startHour: number): any {
-    if (startHour < 12) return "morning";
-    if (startHour < 18) return "afternoon";
-    return "night";
+    return [];
   }
 }

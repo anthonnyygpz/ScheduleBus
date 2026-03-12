@@ -22,10 +22,17 @@ export function useScheduleDerivedData(
   );
 
   const days = useMemo(() => {
+    if (!startDate || isNaN(new Date(startDate).getTime())) {
+      return [];
+    }
+
     const dates = [];
+    const baseDate = new Date(startDate);
+
     for (let i = 0; i < 7; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + i);
+
       dates.push({
         iso: d.toISOString().split("T")[0],
         label: `${["Mar", "Mie", "Jue", "Vie", "Sab", "Dom", "Lun"][i]} ${d.getDate()}/${d.getMonth() + 1}`,
@@ -34,14 +41,32 @@ export function useScheduleDerivedData(
     return dates;
   }, [startDate]);
 
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    const startMinutes = 5 * 60 + 30; // 330 minutos
+    const endMinutes = 22 * 60; // 1320 minutos
+
+    for (let min = startMinutes; min <= endMinutes; min += 30) {
+      const hh = Math.floor(min / 60);
+      const mm = min % 60;
+      const timeString = `${hh.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}`;
+      slots.push(timeString);
+    }
+    return slots;
+  }, []);
+
   const entriesByRoute = useMemo(() => {
     const map = new Map<string, Map<string, ScheduleEntry[]>>();
-    schedule?.entries.forEach((entry: ScheduleEntry) => {
+
+    (schedule?.entries || []).forEach((entry: ScheduleEntry) => {
       if (!map.has(entry.route)) map.set(entry.route, new Map());
+
       const routeDays = map.get(entry.route)!;
       if (!routeDays.has(entry.date)) routeDays.set(entry.date, []);
+
       routeDays.get(entry.date)!.push(entry);
     });
+
     return map;
   }, [schedule]);
 
@@ -59,6 +84,7 @@ export function useScheduleDerivedData(
   return {
     startDate,
     days,
+    timeSlots,
     entriesByRoute,
     groupsMap,
   };

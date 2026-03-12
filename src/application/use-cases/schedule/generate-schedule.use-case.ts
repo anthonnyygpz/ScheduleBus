@@ -1,16 +1,16 @@
 import { EmployeeRepository } from "@/application/repositories/employee.repository";
+import { RouteRepository } from "@/application/repositories/route.repository";
 import { ScheduleRepository } from "@/application/repositories/schedule.repository";
-import { RouteRepository } from "../../repositories/route.repository";
 import { ScheduleEngine } from "@/core/logic/schedule-engine";
 import { ScheduleMapper } from "@/infrastructure/mappers/schedule.mapper";
-import { GenerateScheduleRequestDto } from "../../dtos/schedule.dto";
 
 export class GenerateScheduleUseCase {
   constructor(
-    private employeeRepo: EmployeeRepository,
-    private routeRepo: RouteRepository,
-    private scheduleRepo: ScheduleRepository,
-    private idGenerator: () => string,
+    private readonly employeeRepo: EmployeeRepository,
+    private readonly routeRepo: RouteRepository,
+    private readonly scheduleRepo: ScheduleRepository,
+    private readonly scheduleEngine: ScheduleEngine,
+    private readonly idGenerator: () => string,
   ) {}
 
   async execute(weekStart: Date) {
@@ -19,23 +19,35 @@ export class GenerateScheduleUseCase {
       this.routeRepo.findAll(),
     ]);
 
-    const newEntries = ScheduleEngine.generateWeeklyEntries(
+    if (!employees.length) {
+      throw new Error("Cannot generate schedule: No employees found.");
+    }
+    if (!routes.length) {
+      throw new Error("Cannot generate schedule: No routes found.");
+    }
+
+    const newEntries = this.scheduleEngine.generateWeeklyEntries(
       employees,
       routes,
       weekStart,
       this.idGenerator,
     );
 
-    const scheduleEntity: GenerateScheduleRequestDto = {
+    if (!newEntries.length) {
+      throw new Error(
+        "Schedule Engine could not generate any valid entries for the given parameters.",
+      );
+    }
+
+    const scheduleDomainEntity = {
       id: this.idGenerator(),
       weekStart: weekStart.toISOString().split("T")[0],
       entries: newEntries,
     };
 
-    const schedule = ScheduleMapper.toPersistence(scheduleEntity);
+    const scheduleRecord = ScheduleMapper.toPersistence(scheduleDomainEntity);
+    await this.scheduleRepo.save(scheduleRecord);
 
-    await this.scheduleRepo.save(schedule);
-
-    return schedule;
+    return scheduleRecord;
   }
 }

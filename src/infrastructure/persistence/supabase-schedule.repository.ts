@@ -7,7 +7,6 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
   async getCurrent(): Promise<Schedule | null> {
     const supabase = await createClient();
 
-    // 1. Buscamos el último horario activo
     const { data: scheduleData, error: scheduleError } = await supabase
       .from("schedules")
       .select("*")
@@ -50,7 +49,6 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
     if (scheduleError)
       throw new Error(`Error al guardar cabecera: ${scheduleError.message}`);
 
-    // 2. Preparar las entradas para inserción masiva
     const entriesToSave = schedule.entries.map((entry) => ({
       schedule_id: schedule.id,
       employee_id: parseInt(entry.employeeId),

@@ -1,42 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import Loading from "../ui/loading";
 import { AddEmployeeCard } from "./components/AddEmployeeCard";
-import { useDeleteEmployee } from "./hooks/useDeleteEmployee";
-import { useEmployees } from "./hooks/useEmployees";
 import TableEmployee from "./components/TableEmployee";
 import ToolbarEmployee from "./components/ToolbarEmployee";
-import Loading from "../ui/loading";
-import ErrorText from "../ui/error-text";
+import { useDeleteEmployee } from "./hooks/useDeleteEmployee";
+import { useEmployees } from "./hooks/useEmployees";
+import { EmployeeFiltersDto } from "@/application/dtos/employee.dto";
 
 export function EmployeeManager() {
   const [searchQuery, setSearch] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
+  const [filters, setFilters] = useState<EmployeeFiltersDto>({
+    search: "",
+    limit: 20,
+    page: 1,
+    status: "active",
+    orderBy: "name",
+    ascending: false,
+    groupId: 0,
+  });
 
+  const { data: employees, isLoading, isSearching } = useEmployees(filters);
   const { handleDelete } = useDeleteEmployee();
-  const { data: employees, isLoading, error } = useEmployees(searchQuery);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement> | "") => {
-    if (e === "") {
-      setSearch("");
-      return;
-    }
-    setSearch(e.target.value);
-  };
+  const handleFilters = useCallback((filters: EmployeeFiltersDto) => {
+    setFilters(filters);
+  }, []);
 
-  const handleShowForm = (bool: boolean) => {
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement> | "") => {
+      setSearch(e === "" ? "" : e.target.value);
+    },
+    [],
+  );
+
+  const handleShowForm = useCallback((bool: boolean) => {
     setShowAddForm(bool);
-  };
+  }, []);
 
-  if (error) {
-    return (
-      <ErrorText>
-        <p>Error al cargar empleados</p>
-      </ErrorText>
-    );
-  }
-
-  if (isLoading) {
+  if (isLoading && employees.length === 0) {
     return <Loading>Cargando empleados...</Loading>;
   }
 
@@ -45,9 +49,10 @@ export function EmployeeManager() {
       {/* Toolbar */}
       <ToolbarEmployee
         employees={employees}
-        handleSearch={handleSearch}
-        searchQuery={searchQuery}
         handleShowForm={handleShowForm}
+        isSearching={isSearching}
+        handleFilters={handleFilters}
+        filters={filters}
       />
 
       {/* Add Employee Form */}

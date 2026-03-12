@@ -1,13 +1,18 @@
-import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import {
+  EmployeeFiltersDto,
+  PaginatedEmployeeResponseDto,
+} from "@/application/dtos/employee.dto";
 import { EmployeeRepository } from "@/application/repositories/employee.repository";
 import { EmployeeMapper } from "@/infrastructure/mappers/employee.mapper";
 
 export class GetEmployeesUseCase {
   constructor(private employeeRepo: EmployeeRepository) {}
 
-  async execute(search?: string): Promise<EmployeeResponseDto[]> {
-    const employees = await this.employeeRepo.findAll(search);
+  async execute(
+    filters?: EmployeeFiltersDto,
+  ): Promise<PaginatedEmployeeResponseDto> {
+    const employees = await this.employeeRepo.findAll(filters);
 
-    return employees.map((employee) => EmployeeMapper.toResponseDto(employee));
+    return EmployeeMapper.toPaginatedResponseDto(employees, filters);
   }
 }

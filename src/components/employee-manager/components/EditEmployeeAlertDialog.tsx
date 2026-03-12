@@ -31,7 +31,7 @@ interface Props {
   employee?: EmployeeResponseDto;
 }
 
-export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
+const EditEmployeeForm = ({ employee }: { employee: EmployeeResponseDto }) => {
   const {
     register,
     handleSubmit,
@@ -43,6 +43,130 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
   const { routeOptions } = useRoutes();
   const { groupOptions } = useGroups();
 
+  return (
+    <>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Editar empleado</AlertDialogTitle>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          id="edit-employee"
+          className="flex flex-col gap-2"
+        >
+          <div className="space-y-1">
+            <Label
+              htmlFor="name"
+              className="text-xs text-foreground"
+              title="Nombre completo del empleado ejem. Carlos Martinez"
+            >
+              Nombre completo
+            </Label>
+            <Input className="text-sm text-foreground" {...register("name")} />
+          </div>
+
+          <div className="space-y-1">
+            <Label
+              htmlFor="group"
+              className="text-xs text-foreground"
+              title="Grupo al que pertece el empleado ejem(A,B o C)"
+            >
+              Grupo
+            </Label>
+            <Controller
+              name="groupId"
+              control={control}
+              rules={{ required: "El grupo es obligatorio" }}
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona un grupo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupOptions.map((group) => (
+                      <SelectItem key={group.value} value={group.value}>
+                        {group.label} ({group.value} h/dia)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label
+              htmlFor="phone"
+              className="text-xs text-foreground"
+              title="Numero de telefono del empleado ejem. 123456789"
+            >
+              Numero de telefono
+            </Label>
+            <Input
+              className="text-sm text-foreground"
+              placeholder="123456789"
+              {...register("phone")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label
+              htmlFor="email"
+              className="text-xs text-foreground"
+              title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
+            >
+              Correo Electronico
+            </Label>
+            <Input
+              className="text-sm text-foreground"
+              placeholder="ejemplo@ejemplo.com"
+              {...register("email")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label
+              htmlFor="email"
+              className="text-xs text-foreground"
+              title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
+            >
+              Rutas
+            </Label>
+            <Controller
+              name="routeIds"
+              control={control}
+              render={({ field }) => (
+                <MultiSelect
+                  options={routeOptions}
+                  selected={field.value}
+                  onChange={field.onChange}
+                  placeholder="Selecciona una ruta..."
+                />
+              )}
+            />
+          </div>
+        </form>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction
+          onClick={() => reset()}
+          className="bg-muted text-foreground hover:bg-muted/80"
+        >
+          Cancelar
+        </AlertDialogAction>
+        <AlertDialogAction asChild>
+          <Button
+            type="submit"
+            form="edit-employee"
+            variant="destructive"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Guardando..." : "Guardar"}
+          </Button>
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </>
+  );
+};
+
+export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
   if (!employee) return null;
 
   return (
@@ -57,126 +181,7 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Editar empleado</AlertDialogTitle>
-
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            id="edit-employee"
-            className="flex flex-col gap-2"
-          >
-            <div className="space-y-1">
-              <Label
-                htmlFor="name"
-                className="text-xs text-foreground"
-                title="Nombre completo del empleado ejem. Carlos Martinez"
-              >
-                Nombre completo
-              </Label>
-              <Input
-                className="text-sm text-foreground"
-                {...register("name")}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label
-                htmlFor="group"
-                className="text-xs text-foreground"
-                title="Grupo al que pertece el empleado ejem(A,B o C)"
-              >
-                Grupo
-              </Label>
-              <Controller
-                name="groupId"
-                control={control}
-                rules={{ required: "El grupo es obligatorio" }}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un grupo..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groupOptions.map((group) => (
-                        <SelectItem key={group.value} value={group.value}>
-                          {group.label} ({group.value} h/dia)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label
-                htmlFor="phone"
-                className="text-xs text-foreground"
-                title="Numero de telefono del empleado ejem. 123456789"
-              >
-                Numero de telefono
-              </Label>
-              <Input
-                className="text-sm text-foreground"
-                placeholder="123456789"
-                {...register("phone")}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label
-                htmlFor="email"
-                className="text-xs text-foreground"
-                title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
-              >
-                Correo Electronico
-              </Label>
-              <Input
-                className="text-sm text-foreground"
-                placeholder="ejemplo@ejemplo.com"
-                {...register("email")}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label
-                htmlFor="email"
-                className="text-xs text-foreground"
-                title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
-              >
-                Rutas
-              </Label>
-              <Controller
-                name="routeIds"
-                control={control}
-                render={({ field }) => (
-                  <MultiSelect
-                    options={routeOptions}
-                    selected={field.value}
-                    onChange={field.onChange}
-                    placeholder="Selecciona una ruta..."
-                  />
-                )}
-              />
-            </div>
-          </form>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction
-            onClick={() => reset()}
-            className="bg-muted text-foreground hover:bg-muted/80"
-          >
-            Cancelar
-          </AlertDialogAction>
-          <AlertDialogAction asChild>
-            <Button
-              type="submit"
-              form="edit-employee"
-              variant="destructive"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Guardando..." : "Guardar"}
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
+        <EditEmployeeForm employee={employee} />
       </AlertDialogContent>
     </AlertDialog>
   );

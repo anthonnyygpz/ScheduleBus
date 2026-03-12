@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 
 interface Props {
   className?: string;

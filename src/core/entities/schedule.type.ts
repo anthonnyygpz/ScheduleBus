@@ -1,5 +1,3 @@
-import { GroupType, ShiftType } from "./types.type";
-
 export type ScheduleStatus =
   | "pending"
   | "scheduled"
@@ -12,9 +10,8 @@ export class ScheduleEntry {
     public readonly id: string,
     public readonly employeeId: string,
     public readonly employeeName: string,
-    public readonly group: GroupType,
+    public readonly group: string,
     public readonly date: string,
-    public readonly shift: ShiftType,
     public readonly startTime: string,
     public readonly endTime: string,
     public readonly route: string,

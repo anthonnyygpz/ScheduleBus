@@ -1,20 +1,34 @@
-import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import {
+  EmployeeFiltersDto,
+  PaginatedEmployeeResponseDto,
+} from "@/application/dtos/employee.dto";
 import { fetcher } from "@/core/utils/fetch";
 import { useDebouce } from "@/hooks/useDebounce";
 import useSWR from "swr";
 
-export const useEmployees = (searchQuery?: string) => {
-  const debouncedSearch = useDebouce(searchQuery, 500);
+export const useEmployees = (filters?: EmployeeFiltersDto) => {
+  const debouncedSearch = useDebouce(filters?.search, 500);
 
-  const endpoint = searchQuery
-    ? `/api/employees?search=${debouncedSearch}`
-    : "/api/employees";
+  const params = new URLSearchParams({
+    search: debouncedSearch ?? "",
+    limit: filters?.limit?.toString() ?? "10",
+    page: filters?.page?.toString() ?? "1",
+    orderBy: filters?.orderBy ?? "name",
+    asending: filters?.ascending?.toString() === "true" ? "true" : "false",
+    groupId: filters?.groupId?.toString() ?? "",
+  });
 
-  const {
-    data = [],
+  const { data, error, isLoading, isValidating } =
+    useSWR<PaginatedEmployeeResponseDto>(`/api/employees?${params}`, fetcher, {
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    });
+
+  return {
+    data: data?.data || [],
+    medatada: data?.metadata,
     error,
-    isLoading,
-  } = useSWR<EmployeeResponseDto[]>(endpoint, fetcher);
-
-  return { data, error, isLoading };
+    isLoading: isLoading || (isValidating && data === undefined),
+    isSearching: isValidating,
+  };
 };

@@ -1,9 +1,8 @@
-import { Schedule, ScheduleEntry } from "@/core/entities/schedule.type";
-import { GroupType, ShiftType } from "@/core/entities/types.type";
 import {
   GenerateScheduleRequestDto,
   ScheduleResponseDto,
 } from "@/application/dtos/schedule.dto";
+import { Schedule, ScheduleEntry } from "@/core/entities/schedule.type";
 
 export class ScheduleMapper {
   static toDomain(rawSchedule: any, rawEntries: any[] = []): Schedule {
@@ -13,9 +12,8 @@ export class ScheduleMapper {
           entry.id,
           entry.employee_id.toString(),
           entry.employee_name,
-          entry.group_snapshot as GroupType,
+          entry.group_snapshot,
           entry.date,
-          entry.shift as ShiftType,
           entry.start_time,
           entry.end_time,
           entry.route_name,
@@ -62,12 +60,36 @@ export class ScheduleMapper {
       employee_name: entry.employeeName,
       group_snapshot: entry.group,
       date: entry.date,
-      shift: entry.shift,
       start_time: entry.startTime,
       end_time: entry.endTime,
       route_name: entry.route,
       status: entry.status,
       progress: entry.progress,
     }));
+  }
+
+  static toPersistenceEntry(entry: ScheduleEntry) {
+    return {
+      schedule_id: entry.id,
+      employee_id: parseInt(entry.employeeId),
+      employee_name: entry.employeeName,
+      group_snapshot: entry.group,
+      date: entry.date,
+      start_time: entry.startTime,
+      end_time: entry.endTime,
+      route_name: entry.route,
+      status: entry.status,
+      progress: entry.progress,
+    };
+  }
+
+  static toPersistenceSchedule(schedule: Schedule): any {
+    return {
+      id: schedule.id,
+      week_start: schedule.week_start,
+      week_end: schedule.week_end,
+      status: schedule.status || "active",
+      created_at: schedule.created_at || new Date().toISOString(),
+    };
   }
 }

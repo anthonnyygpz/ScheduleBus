@@ -4,7 +4,7 @@ import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Info } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils/tw";
 import {
   Tooltip,
   TooltipContent,

@@ -15,7 +15,7 @@ const GroupCards = () => {
           style={{ borderLeftColor: group.color }}
           className="border-l-4"
         >
-          <CardContent className="p-3 flex items-center justify-between">
+          <CardContent className="py-0.5 px-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase font-bold text-muted-foreground">
                 Grupo {group.name}

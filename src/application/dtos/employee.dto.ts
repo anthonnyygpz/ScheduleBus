@@ -1,4 +1,5 @@
 import { IGroup, IRoute } from "@/core/entities/types.type";
+import { Metadata } from "./pagination.dto";
 
 export class EmployeeResponseDto {
   constructor(props: EmployeeResponseDto) {
@@ -32,4 +33,24 @@ export class EmployeeRequestDto {
   public readonly phone: string;
   public readonly groupId: string;
   public readonly routeIds: string[];
+}
+
+export interface EmployeeFiltersDto {
+  search?: string;
+  limit?: number;
+  page?: number;
+  status?: string;
+  orderBy?: string;
+  ascending?: boolean;
+  groupId?: number;
+}
+
+export class PaginatedEmployeeResponseDto {
+  constructor(props: PaginatedEmployeeResponseDto) {
+    this.metadata = props.metadata;
+    this.data = props.data;
+  }
+
+  public readonly metadata: Metadata;
+  public readonly data: EmployeeResponseDto[];
 }
