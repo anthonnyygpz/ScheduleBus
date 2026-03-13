@@ -10,39 +10,31 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/core/utils/tw";
-import { LayoutGrid, Users } from "lucide-react";
+import { LayoutGrid, Users, Loader2, Search, X } from "lucide-react";
+import { useEmployees } from "../employee-manager/hooks/useEmployees";
+import { useFilterEmployee } from "../employee-manager/hooks/useFilterEmployee";
 import { useGroups } from "../group-manager";
 import { useRoutes } from "../route-manager";
 import ErrorText from "../ui/error-text";
+import { Input } from "../ui/input";
 import Loading from "../ui/loading";
 import GroupCards from "./components/GroupCards";
+import TableEmployeeSchedule from "./components/TableEmployeeSchedule";
 import ToolbarSchedule from "./components/ToolbarSchedule";
 import { useSchedule } from "./hooks/useSchedule";
 import { useScheduleDerivedData } from "./hooks/useScheduleDerivedData";
-import { useEmployees } from "../employee-manager/hooks/useEmployees";
-import { Input } from "../ui/input";
-import { useState } from "react";
-import TableEmployeeSchedule from "./components/TableEmployeeSchedule";
+import { Button } from "@/components/ui/button";
 
 export function ScheduleView() {
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
   const { routeOptions: routes } = useRoutes();
+  const { filters, handleFilters } = useFilterEmployee();
   const { data: schedule, error, isLoading } = useSchedule();
   const { data: groups } = useGroups();
-  const { data: employees } = useEmployees(searchQuery);
+  const { data: employees, metadata, isSearching } = useEmployees(filters);
   const { startDate, days, entriesByRoute, groupsMap } = useScheduleDerivedData(
     schedule,
     groups,
   );
-
-  const handleSearchQuery = (e: React.ChangeEvent<HTMLInputElement> | "") => {
-    if (e === "") {
-      setSearchQuery("");
-      return;
-    }
-    setSearchQuery(e.target.value);
-  };
 
   const isTimeInRange = (timeStr: string) => {
     const [hours, minutes] = timeStr.split(":").map(Number);
@@ -201,20 +193,55 @@ export function ScheduleView() {
 
         <TabsContent
           value="employees"
-          className="flex-1 overflow-auto rounded-xl border bg-card"
+          className="flex-1 flex flex-col min-h-0 rounded-xl border bg-card overflow-hidden"
         >
-          <div className="bg-card p-4">
-            <div className="mb-4">
+          <div className="flex flex-col flex-1 p-4 gap-4 bg-card min-h-0">
+            <div className="w-full shrink-0">
               <Input
-                onChange={handleSearchQuery}
-                placeholder="Buscar por nombre"
+                onChange={(e) =>
+                  handleFilters({ ...filters, search: e.target.value })
+                }
+                autoFocus
+                placeholder="Buscar empleado..."
                 className="w-full"
+                value={filters.search}
+                type="search"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                startAdornment={
+                  isSearching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  ) : (
+                    <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                  )
+                }
+                endAdornment={
+                  filters?.search!.length > 0 &&
+                  !isSearching && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFilters({ ...filters, search: "" })}
+                      className="text-xs cursor-pointer h-7 w-7 p-0"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  )
+                }
               />
             </div>
-            <TableEmployeeSchedule
-              employees={employees}
-              groupsMap={groupsMap}
-            />
+
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <TableEmployeeSchedule
+                employees={employees}
+                groupsMap={groupsMap}
+                isSearching={isSearching}
+                metadata={metadata}
+                handleFilters={handleFilters}
+                filters={filters}
+              />
+            </div>
           </div>
         </TabsContent>
       </Tabs>

@@ -1,11 +1,15 @@
 "use client";
 
 import React from "react";
-import { EmployeeResponseDto } from "@/application/dtos/employee.dto";
+import {
+  EmployeeFiltersDto,
+  EmployeeResponseDto,
+} from "@/application/dtos/employee.dto";
 import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -13,28 +17,34 @@ import {
 import { Badge } from "../../ui/badge";
 import { DeleteEmployeeAlertDialog } from "./DeleteEmployeeAlertDialog";
 import { EditEmployeeAlertDialog } from "./EditEmployeeAlertDialog";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Metadata } from "@/application/dtos/pagination.dto";
 
 interface Props {
   employees: EmployeeResponseDto[];
-  searchQuery: string;
-  onDelete: (id: number) => void;
+  metadata?: Metadata;
+  filters: EmployeeFiltersDto;
+  onDelete: (id: number, name?: string) => void;
+  handleFilters: (filters: EmployeeFiltersDto) => void;
+  isSearching: boolean;
 }
 
 const TableEmployee: React.FC<Props> = React.memo(
-  ({ employees, searchQuery, onDelete }) => {
+  ({ employees, onDelete, handleFilters, filters, isSearching, metadata }) => {
     if (employees.length <= 0) {
       return (
         <div className="flex items-center justify-center py-20">
           <div className="flex items-center gap-2 text-muted-foreground">
-            No se encontraron empleados con el nombre "{searchQuery}"
+            No se encontraron empleados con el nombre "{filters.search}"
           </div>
         </div>
       );
     }
 
     return (
-      <Table>
-        <TableHeader className="sticky top-0 z-10 bg-card">
+      <Table containerClassName="max-h-full">
+        <TableHeader className="sticky top-0 z-10 bg-card shadow-sm">
           <TableRow className="border-border hover:bg-transparent">
             <TableHead className="text-[11px] font-semibold text-muted-foreground 2xl:text-xs">
               Nombre
@@ -85,22 +95,63 @@ const TableEmployee: React.FC<Props> = React.memo(
               <TableCell className="flex flex-row py-2 gap-2">
                 <EditEmployeeAlertDialog employee={emp} />
                 <DeleteEmployeeAlertDialog
-                  handleDelete={() => onDelete(emp.id)}
+                  handleDelete={() => onDelete(emp.id, emp.name)}
                   name={emp.name}
                 />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
+        <TableFooter className="sticky bottom-0 z-20 bg-card">
+          <TableRow>
+            <TableCell colSpan={6}>
+              <div className="flex items-center justify-end mr-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    disabled={isSearching || !metadata!.hasPrev}
+                    size="sm"
+                    className="flex items-center gap-2 cursor-pointer active:opacity-50"
+                    onClick={() =>
+                      handleFilters({
+                        ...filters,
+                        page: filters.page! - 1,
+                      })
+                    }
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  {employees.length > 0 && (
+                    <span className="text-xs font-medium text-foreground 2xl:text-sm">
+                      {metadata?.total} empleados
+                    </span>
+                  )}
+
+                  <Button
+                    disabled={isSearching || !metadata!.hasNext}
+                    size="sm"
+                    className="flex items-center gap-2 cursor-pointer active:opacity-50"
+                    onClick={() =>
+                      handleFilters({
+                        ...filters,
+                        page: filters.page! + 1,
+                      })
+                    }
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
       </Table>
     );
   },
   (prevProps, nextProps) => {
-    // Solo re-renderizar si los empleados cambian o si el estado vacío necesita actualizar searchQuery
     if (prevProps.employees !== nextProps.employees) return false;
     if (
       nextProps.employees.length === 0 &&
-      prevProps.searchQuery !== nextProps.searchQuery
+      prevProps.filters.search !== nextProps.filters.search
     )
       return false;
     return true;

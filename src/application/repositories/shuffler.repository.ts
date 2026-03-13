@@ -1,3 +1,3 @@
 export interface ShufflerRepository {
-  shuffle<T>(array: T[]): T[];
+  shuffle<T>(array: T[], seed?: string): T[];
 }

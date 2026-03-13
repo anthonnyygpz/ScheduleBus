@@ -5,7 +5,6 @@ import { useGroups } from "@/components/group-manager";
 import { useRoutes } from "@/components/route-manager/hooks/useRoutes";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -27,21 +26,35 @@ import { Edit } from "lucide-react";
 import { Controller } from "react-hook-form";
 import { useUpdateEmployee } from "../hooks/useUpdateEmployee";
 
+import { useState } from "react";
+
 interface Props {
   employee?: EmployeeResponseDto;
 }
 
-const EditEmployeeForm = ({ employee }: { employee: EmployeeResponseDto }) => {
+const EditEmployeeForm = ({
+  employee,
+  onSuccess,
+}: {
+  employee: EmployeeResponseDto;
+  onSuccess: () => void;
+}) => {
   const {
     register,
     handleSubmit,
-    onSubmit,
+    onSubmit: baseOnSubmit,
     control,
     formState: { isSubmitting },
     reset,
   } = useUpdateEmployee(employee);
+
   const { routeOptions } = useRoutes();
   const { groupOptions } = useGroups();
+
+  const onSubmit = async (data: any) => {
+    await baseOnSubmit(data);
+    onSuccess();
+  };
 
   return (
     <>
@@ -84,7 +97,7 @@ const EditEmployeeForm = ({ employee }: { employee: EmployeeResponseDto }) => {
                   <SelectContent>
                     {groupOptions.map((group) => (
                       <SelectItem key={group.value} value={group.value}>
-                        {group.label} ({group.value} h/dia)
+                        {group.label} ({group.hours} h/dia)
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -123,9 +136,9 @@ const EditEmployeeForm = ({ employee }: { employee: EmployeeResponseDto }) => {
           </div>
           <div className="space-y-1">
             <Label
-              htmlFor="email"
+              htmlFor="routes"
               className="text-xs text-foreground"
-              title="Correo electronico del empleado ejem. ejemplo@ejemplo.com"
+              title="Rutas asignadas al empleado"
             >
               Rutas
             </Label>
@@ -145,32 +158,35 @@ const EditEmployeeForm = ({ employee }: { employee: EmployeeResponseDto }) => {
         </form>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogAction
-          onClick={() => reset()}
+        <Button
+          onClick={() => {
+            reset();
+            onSuccess();
+          }}
+          variant="outline"
           className="bg-muted text-foreground hover:bg-muted/80"
         >
           Cancelar
-        </AlertDialogAction>
-        <AlertDialogAction asChild>
-          <Button
-            type="submit"
-            form="edit-employee"
-            variant="destructive"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Guardando..." : "Guardar"}
-          </Button>
-        </AlertDialogAction>
+        </Button>
+        <Button
+          type="submit"
+          form="edit-employee"
+          variant="destructive"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Guardando..." : "Guardar"}
+        </Button>
       </AlertDialogFooter>
     </>
   );
 };
 
 export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
+  const [open, setOpen] = useState(false);
   if (!employee) return null;
 
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
@@ -181,7 +197,10 @@ export const EditEmployeeAlertDialog: React.FC<Props> = ({ employee }) => {
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
-        <EditEmployeeForm employee={employee} />
+        <EditEmployeeForm
+          employee={employee}
+          onSuccess={() => setOpen(false)}
+        />
       </AlertDialogContent>
     </AlertDialog>
   );

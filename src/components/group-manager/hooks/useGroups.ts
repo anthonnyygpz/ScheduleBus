@@ -15,6 +15,7 @@ export const useGroups = () => {
       data.map((group) => ({
         value: group.id.toString(),
         label: group.name,
+        hours: group.hours,
       })),
     [data],
   );

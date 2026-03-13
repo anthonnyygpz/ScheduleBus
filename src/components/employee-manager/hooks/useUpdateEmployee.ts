@@ -12,11 +12,12 @@ export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
 
   const form = useForm<EmployeeRequestDto>({
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      groupId: "",
-      routeIds: [],
+      name: employee?.name || "",
+      email: employee?.email || "",
+      phone: employee?.phone || "",
+      groupId: employee?.group.id.toString() || "",
+      routeIds: employee?.routes.map((r) => r.id.toString()) || [],
+      status: "",
     },
   });
 
@@ -58,9 +59,13 @@ export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Error al crear el empleado");
+        throw new Error(errorData.message || "Error al actualizar el empleado");
       }
-      await mutate("/api/employees");
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith("/api/employees"),
+        undefined,
+        { revalidate: true },
+      );
       form.reset();
 
       toast({
@@ -75,7 +80,8 @@ export const useUpdateEmployee = (employee?: EmployeeResponseDto) => {
         title: "Error al guardar",
         description: error.message || "No se pudo procesar la solicitud.",
       });
-      console.error("Create Employee Error:", error);
+      console.error("Update Employee Error:", error);
+      throw error;
     }
   };
 

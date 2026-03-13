@@ -4,7 +4,7 @@ import { Card, CardContent } from "../../ui/card";
 import { useGroups } from "@/components/group-manager";
 
 const GroupCards = () => {
-  const { data: employees } = useEmployees();
+  const { data: employees } = useEmployees({ limit: 10000, status: "active" });
   const { data: groups } = useGroups();
 
   return (
@@ -23,6 +23,7 @@ const GroupCards = () => {
               <p className="text-sm font-bold">{group.hours} Horas</p>
             </div>
             <Badge variant="outline" className="text-[10px]">
+              {/* Ahora el filter operará sobre el total de empleados activos */}
               {employees.filter((e) => e.group.id === group.id).length} Emp.
             </Badge>
           </CardContent>

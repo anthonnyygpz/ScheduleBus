@@ -35,6 +35,29 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
     return ScheduleMapper.toDomain(scheduleData, entriesData);
   }
 
+  async findByWeekStart(weekStart: string): Promise<Schedule | null> {
+    const supabase = await createClient();
+
+    const { data: scheduleData, error: scheduleError } = await supabase
+      .from("schedules")
+      .select("*")
+      .eq("week_start", weekStart)
+      .limit(1)
+      .maybeSingle();
+
+    if (scheduleError)
+      throw new Error("Error al obtener el horario por fecha.");
+
+    if (!scheduleData) return null;
+
+    const { data: entriesData } = await supabase
+      .from("schedule_entries")
+      .select("*")
+      .eq("schedule_id", scheduleData.id);
+
+    return ScheduleMapper.toDomain(scheduleData, entriesData || []);
+  }
+
   async save(schedule: Schedule): Promise<void> {
     const supabase = await createClient();
 
@@ -50,12 +73,12 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
       throw new Error(`Error al guardar cabecera: ${scheduleError.message}`);
 
     const entriesToSave = schedule.entries.map((entry) => ({
+      id: entry.id,
       schedule_id: schedule.id,
       employee_id: parseInt(entry.employeeId),
       employee_name: entry.employeeName,
       group_snapshot: entry.group,
       date: entry.date,
-      shift: entry.shift,
       start_time: entry.startTime,
       end_time: entry.endTime,
       route_name: entry.route,
@@ -63,7 +86,6 @@ export class SupabaseScheduleRepository implements ScheduleRepository {
       progress: entry.progress,
     }));
 
-    // 3. Guardar entradas (Primero limpiamos si es una actualización para evitar duplicados)
     await supabase
       .from("schedule_entries")
       .delete()

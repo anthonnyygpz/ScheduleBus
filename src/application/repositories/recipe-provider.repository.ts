@@ -1,3 +1,3 @@
 export interface RecipeProviderRepository {
-  getRecipes(): string[][];
+  getRecipes(availableGroups: string[], defaultTeamSize?: number): string[][];
 }

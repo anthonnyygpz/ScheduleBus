@@ -11,15 +11,15 @@ import { GenerateScheduleUseCase } from "@/application/use-cases/schedule/genera
 import { GetScheduleUseCase } from "@/application/use-cases/schedule/get-schedule.use-case";
 import { LiveScheduleUseCase } from "@/application/use-cases/schedule/live-schedule.use-case";
 import { ScheduleEngine } from "@/core/logic/schedule-engine";
-import { StaticRecipeProvider } from "./persistence/static-recipe-provider.repository";
-import { RandomShuffler } from "./persistence/random-shuffler.repository";
+import { DeterministicShuffler } from "./persistence/deterministic-shuffler.repository";
+import { DynamicRecipeProvider } from "./persistence/dynamic-recipe-provider.repository";
 
 const employeeRepo = new SupbaseEmployeeRepository();
 const routeRepo = new SupabaseRouteRepository();
 const groupRepo = new SupabaseGroupRepository();
 const scheduleRepo = new SupabaseScheduleRepository();
-const recipeProvider = new StaticRecipeProvider();
-const shuffler = new RandomShuffler();
+const recipeProvider = new DynamicRecipeProvider();
+const shuffler = new DeterministicShuffler();
 const scheduleEngine = new ScheduleEngine(recipeProvider, shuffler);
 
 const getEmployeesUseCase = new GetEmployeesUseCase(employeeRepo);

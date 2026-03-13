@@ -15,37 +15,39 @@ export class GenerateScheduleUseCase {
 
   async execute(weekStart: Date) {
     const [employees, routes] = await Promise.all([
-      this.employeeRepo.findAll(),
+      this.employeeRepo.findAll({ status: "active", page: 1, limit: 10000 }),
       this.routeRepo.findAll(),
     ]);
 
-    if (!employees.length) {
-      throw new Error("Cannot generate schedule: No employees found.");
-    }
-    if (!routes.length) {
-      throw new Error("Cannot generate schedule: No routes found.");
-    }
+    const activeEmployees = employees.employees;
+
+    if (!employees.employees.length) throw new Error("No hay empleados.");
+    if (!routes.length) throw new Error("No hay rutas.");
+
+    const weekStartStr = weekStart.toISOString().split("T")[0];
+
+    const existingSchedule =
+      await this.scheduleRepo.findByWeekStart(weekStartStr);
+
+    const scheduleId = existingSchedule
+      ? existingSchedule.id
+      : this.idGenerator();
 
     const newEntries = this.scheduleEngine.generateWeeklyEntries(
-      employees,
+      activeEmployees,
       routes,
       weekStart,
       this.idGenerator,
     );
 
-    if (!newEntries.length) {
-      throw new Error(
-        "Schedule Engine could not generate any valid entries for the given parameters.",
-      );
-    }
-
     const scheduleDomainEntity = {
-      id: this.idGenerator(),
-      weekStart: weekStart.toISOString().split("T")[0],
+      id: scheduleId,
+      weekStart: weekStartStr,
       entries: newEntries,
     };
 
     const scheduleRecord = ScheduleMapper.toPersistence(scheduleDomainEntity);
+
     await this.scheduleRepo.save(scheduleRecord);
 
     return scheduleRecord;

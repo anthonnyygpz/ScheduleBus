@@ -26,6 +26,7 @@ export class EmployeeRequestDto {
     this.phone = props.phone;
     this.groupId = props.groupId;
     this.routeIds = props.routeIds;
+    this.status = props.status;
   }
 
   public readonly name: string;
@@ -33,6 +34,7 @@ export class EmployeeRequestDto {
   public readonly phone: string;
   public readonly groupId: string;
   public readonly routeIds: string[];
+  public readonly status: string;
 }
 
 export interface EmployeeFiltersDto {

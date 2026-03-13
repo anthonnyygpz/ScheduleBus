@@ -24,6 +24,7 @@ export class EmployeeMapper {
         id: item.route?.id || 0,
         name: item.route?.name || "Ruta no definida",
       })) || [],
+      raw.status || "",
     );
   }
 
@@ -43,6 +44,7 @@ export class EmployeeMapper {
         hours: 0,
       },
       cleanRouteIds.map((id) => ({ id, name: "" })),
+      data.status || "",
     );
   }
 
@@ -59,17 +61,32 @@ export class EmployeeMapper {
 
   static toPaginatedResponseDto(
     entities: Employee[],
+    totalCount: number,
     filters?: EmployeeFiltersDto,
   ): PaginatedEmployeeResponseDto {
-    const total = entities.length;
     const page = filters?.page || 1;
     const limit = filters?.limit || 20;
+
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
     const offset = (page - 1) * limit;
-    const from = offset + 1;
-    const to = offset + entities.length;
+    const from = totalCount === 0 ? 0 : offset + 1;
+    const to = Math.min(offset + entities.length, totalCount);
 
     return new PaginatedEmployeeResponseDto({
-      metadata: { total, page, limit, offset, from, to },
+      metadata: {
+        total: totalCount,
+        page,
+        limit,
+        offset,
+        from,
+        to,
+        hasNext,
+        hasPrev,
+        totalPages,
+      },
       data: entities.map((entity) => EmployeeMapper.toResponseDto(entity)),
     });
   }

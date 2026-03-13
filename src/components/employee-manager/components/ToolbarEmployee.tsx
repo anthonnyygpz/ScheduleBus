@@ -99,6 +99,20 @@ const ToolbarEmployee: React.FC<Props> = ({
                   Numero de empleado
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup
+                value={filters.ascending ? "true" : "false"}
+                onValueChange={(value) =>
+                  handleFilters({ ...filters, ascending: value === "true" })
+                }
+              >
+                <DropdownMenuRadioItem value="true">
+                  Ascendente
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="false">
+                  Descendente
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -107,6 +121,7 @@ const ToolbarEmployee: React.FC<Props> = ({
             onChange={(e) =>
               handleFilters({ ...filters, search: e.target.value })
             }
+            autoFocus
             placeholder="Buscar empleado..."
             className="w-full"
             value={filters.search}

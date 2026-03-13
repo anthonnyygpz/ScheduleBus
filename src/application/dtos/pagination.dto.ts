@@ -5,4 +5,7 @@ export interface Metadata {
   offset: number;
   from: number;
   to: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  totalPages: number;
 }

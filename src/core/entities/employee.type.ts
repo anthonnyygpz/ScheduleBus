@@ -8,5 +8,6 @@ export class Employee {
     public phone: string,
     public group: IGroup,
     public routes: IRoute[],
+    public status: string,
   ) {}
 }

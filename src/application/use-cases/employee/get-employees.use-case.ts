@@ -11,8 +11,8 @@ export class GetEmployeesUseCase {
   async execute(
     filters?: EmployeeFiltersDto,
   ): Promise<PaginatedEmployeeResponseDto> {
-    const employees = await this.employeeRepo.findAll(filters);
+    const { employees, total } = await this.employeeRepo.findAll(filters);
 
-    return EmployeeMapper.toPaginatedResponseDto(employees, filters);
+    return EmployeeMapper.toPaginatedResponseDto(employees, total, filters);
   }
 }

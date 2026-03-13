@@ -94,7 +94,7 @@ export const AddEmployeeCard: React.FC<Props> = ({ onCloseForm }) => {
                     <SelectContent>
                       {groupOptions.map((group) => (
                         <SelectItem key={group.value} value={group.value}>
-                          {group.label} ({group.value} h/dia)
+                          {group.label} ({group.hours} h/dia)
                         </SelectItem>
                       ))}
                     </SelectContent>

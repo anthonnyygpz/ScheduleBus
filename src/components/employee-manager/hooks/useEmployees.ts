@@ -14,8 +14,9 @@ export const useEmployees = (filters?: EmployeeFiltersDto) => {
     limit: filters?.limit?.toString() ?? "10",
     page: filters?.page?.toString() ?? "1",
     orderBy: filters?.orderBy ?? "name",
-    asending: filters?.ascending?.toString() === "true" ? "true" : "false",
+    ascending: filters?.ascending?.toString() === "true" ? "true" : "false",
     groupId: filters?.groupId?.toString() ?? "",
+    status: filters?.status ?? "",
   });
 
   const { data, error, isLoading, isValidating } =
@@ -26,7 +27,7 @@ export const useEmployees = (filters?: EmployeeFiltersDto) => {
 
   return {
     data: data?.data || [],
-    medatada: data?.metadata,
+    metadata: data?.metadata,
     error,
     isLoading: isLoading || (isValidating && data === undefined),
     isSearching: isValidating,

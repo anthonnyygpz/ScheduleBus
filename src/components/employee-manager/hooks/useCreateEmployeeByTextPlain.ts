@@ -34,7 +34,11 @@ export const useCreateEmployeeByTextPlain = () => {
         const errorData = await response.json();
         throw new Error(errorData.message || "Error al crear el empleado");
       }
-      await mutate("/api/employees");
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith("/api/employees"),
+        undefined,
+        { revalidate: true },
+      );
       reset();
 
       toast({

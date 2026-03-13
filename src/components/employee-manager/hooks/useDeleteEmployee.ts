@@ -4,7 +4,7 @@ import { mutate } from "swr";
 export const useDeleteEmployee = () => {
   const { toast } = useToast();
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, name?: string) => {
     try {
       const response = await fetch(`/api/employees?id=${id}`, {
         method: "DELETE",
@@ -15,11 +15,15 @@ export const useDeleteEmployee = () => {
         throw new Error(errorData.message || "Error al eliminar empleado");
       }
 
-      await mutate("/api/employees");
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith("/api/employees"),
+        undefined,
+        { revalidate: true },
+      );
 
       toast({
         title: "Empleado dado de baja exitosamente",
-        description: `${name} ha sido dato de baja exitosamente`,
+        description: `${name || "El empleado"} ha sido dato de baja exitosamente`,
         variant: "success",
         duration: 3000,
       });

@@ -5,7 +5,9 @@ import { EmployeeRepository } from "@/application/repositories/employee.reposito
 import { EmployeeFiltersDto } from "@/application/dtos/employee.dto";
 
 export class SupbaseEmployeeRepository implements EmployeeRepository {
-  async findAll(filters?: EmployeeFiltersDto): Promise<Employee[]> {
+  async findAll(
+    filters?: EmployeeFiltersDto,
+  ): Promise<{ employees: Employee[]; total: number }> {
     const supabase = await createClient();
 
     let query = supabase
@@ -19,6 +21,7 @@ export class SupbaseEmployeeRepository implements EmployeeRepository {
         groups (id, name, hours ),
         routes:employee_routes ( route:routes ( id, name ))
       `,
+        { count: "exact" },
       )
       .neq("status", "deleted");
 
@@ -42,13 +45,16 @@ export class SupbaseEmployeeRepository implements EmployeeRepository {
       query = query.range(from, to);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error !== null) {
       this.handleError(error, "obtener empleados");
     }
 
-    return (data || []).map((row) => EmployeeMapper.toMap(row));
+    return {
+      employees: (data || []).map((row) => EmployeeMapper.toMap(row)),
+      total: count || 0,
+    };
   }
 
   async findById(id: number): Promise<Employee | null> {
