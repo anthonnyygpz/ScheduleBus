@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { useTableSchedule } from "../hooks/useTableSchedule";
 import { useGenerateSchedule } from "../hooks/useGenerateSchedule";
-import { useState } from "react";
 import { ScheduleResponseDto } from "@/application/dtos/schedule.dto";
 import { cn } from "@/core/utils/tw";
 import { useScheduleDerivedData } from "../hooks/useScheduleDerivedData";
@@ -28,11 +27,16 @@ import { GroupResponseDto } from "@/application/dtos/group.dto";
 interface Props {
   schedule?: ScheduleResponseDto;
   groups: GroupResponseDto[];
+  weekOffset: number;
+  handleWeekOffset: (offset: number | ((prev: number) => number)) => void;
 }
 
-const ToolbarSchedule: React.FC<Props> = ({ schedule, groups }) => {
-  const [weekOffset, setWeekOffset] = useState<number>(0);
-
+const ToolbarSchedule: React.FC<Props> = ({
+  schedule,
+  groups,
+  weekOffset,
+  handleWeekOffset,
+}) => {
   const { handleDownloadPDF, exporting } = useTableSchedule(schedule);
   const { handleGenerate, isGenerating } = useGenerateSchedule(weekOffset);
   const { startDate } = useScheduleDerivedData(schedule, groups);
@@ -43,7 +47,7 @@ const ToolbarSchedule: React.FC<Props> = ({ schedule, groups }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setWeekOffset((p) => p - 1)}
+          onClick={() => handleWeekOffset((p) => p - 1)}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -55,7 +59,7 @@ const ToolbarSchedule: React.FC<Props> = ({ schedule, groups }) => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setWeekOffset((p) => p + 1)}
+          onClick={() => handleWeekOffset((p) => p + 1)}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

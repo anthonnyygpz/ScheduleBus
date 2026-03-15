@@ -4,12 +4,14 @@ import { ScheduleResponseDto } from "@/application/dtos/schedule.dto";
 import { GroupResponseDto } from "@/application/dtos/group.dto";
 
 export const getTuesday = (d: Date): Date => {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day <= 2 ? 2 : 9);
-  const tuesday = new Date(date.setDate(diff));
-  tuesday.setHours(0, 0, 0, 0);
-  return tuesday;
+  const date = new Date(
+    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+  );
+  const day = date.getUTCDay();
+
+  const dayToSubtract = (day - 2 + 7) % 7;
+  date.setUTCDate(date.getUTCDate() - dayToSubtract);
+  return date;
 };
 
 export function useScheduleDerivedData(
@@ -22,20 +24,18 @@ export function useScheduleDerivedData(
   );
 
   const days = useMemo(() => {
-    if (!startDate || isNaN(new Date(startDate).getTime())) {
-      return [];
-    }
+    if (!startDate || isNaN(new Date(startDate).getTime())) return [];
 
     const dates = [];
     const baseDate = new Date(startDate);
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(baseDate);
-      d.setDate(baseDate.getDate() + i);
+      d.setUTCDate(baseDate.getUTCDate() + i);
 
       dates.push({
         iso: d.toISOString().split("T")[0],
-        label: `${["Mar", "Mie", "Jue", "Vie", "Sab", "Dom", "Lun"][i]} ${d.getDate()}/${d.getMonth() + 1}`,
+        label: `${["Mar", "Mie", "Jue", "Vie", "Sab", "Dom", "Lun"][i]} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`,
       });
     }
     return dates;

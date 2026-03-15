@@ -24,7 +24,7 @@ export class ScheduleEngine {
 
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(weekStart);
-      currentDate.setDate(weekStart.getDate() + i);
+      currentDate.setUTCDate(weekStart.getUTCDate() + i);
       const dateStr = currentDate.toISOString().split("T")[0];
 
       const assignedToday = new Set<number>();
@@ -39,30 +39,21 @@ export class ScheduleEngine {
         );
 
         if (team.length > 0) {
-          // Iniciamos el contador estrictamente a las 05:30 AM (330 minutos)
           let currentMinutes = this.DAY_START_MINUTES;
 
-          for (let i = 0; i < team.length; i++) {
-            const employee = team[i];
+          for (let idx = 0; idx < team.length; idx++) {
+            const employee = team[idx];
 
-            // Si ya se cubrió hasta las 10:00 PM, detenemos la asignación
-            if (currentMinutes >= this.DAY_END_MINUTES) break;
-
+            // 1. Calculamos el fin de jornada real basado en las horas del grupo
+            const shiftDurationMinutes = employee.group.hours * 60;
             const startMins = currentMinutes;
-            let endMins = startMins + employee.group.hours * 60;
+            const endMins = startMins + shiftDurationMinutes;
 
-            const isLastInTeam = i === team.length - 1;
-            const remainingMins = this.DAY_END_MINUTES - endMins;
-
-            // 👇 REGLA DE ORO: Ajuste dinámico de cierre
-            // Si falta poco tiempo para cerrar (ej. 90 mins o menos), o si el cálculo
-            // matemático excede las 10:00 PM, forzamos la hora de salida a las 10:00 PM exactas.
-            if (
-              isLastInTeam ||
-              remainingMins <= 90 ||
-              endMins > this.DAY_END_MINUTES
-            ) {
-              endMins = this.DAY_END_MINUTES;
+            // 2. VALIDACIÓN ESTRICTA:
+            // Si el turno completo excede las 10:00 PM (1320 min), NO se asigna.
+            // Así respetamos que el empleado trabaje sus horas completas "ni más ni menos".
+            if (endMins > this.DAY_END_MINUTES) {
+              break;
             }
 
             entries.push(
@@ -75,13 +66,12 @@ export class ScheduleEngine {
                 this.formatTime(startMins),
                 this.formatTime(endMins),
                 route.name,
-                "scheduled",
-                0,
+                // Hemos removido "scheduled" y 0, el constructor los asignará automáticamente.
               ),
             );
 
             assignedToday.add(employee.id);
-            currentMinutes = endMins; // El siguiente empleado (si lo hay) empieza donde terminó este
+            currentMinutes = endMins; // El siguiente comienza exactamente donde terminó el anterior
           }
         }
       });
@@ -103,16 +93,19 @@ export class ScheduleEngine {
     assignedToday: Set<number>,
     dateStr: string,
   ): Employee[] {
-    // Para hacer la validación dinámica de grupos como vimos anteriormente:
     const availableGroups = Array.from(
       new Set(employees.map((e) => e.group.name)),
     );
     const recipes = this.recipeProvider.getRecipes(availableGroups);
 
+    // Mezclamos para asegurar rotación justa de grupos
     const shuffledRecipes = this.shuffler.shuffle(
       [...recipes],
       `${dateStr}-${route.id}`,
     );
+
+    let bestTeam: Employee[] = [];
+    let bestDurationMinutes = 0;
 
     for (const recipe of shuffledRecipes) {
       const tentativeTeam: Employee[] = [];
@@ -138,15 +131,38 @@ export class ScheduleEngine {
         if (candidate) {
           tentativeTeam.push(candidate);
         } else {
-          break;
+          break; // Rompemos solo este intento de receta si falta un empleado
         }
       }
 
+      // Si logramos armar el equipo completo dictado por la receta
       if (tentativeTeam.length === recipe.length) {
-        return tentativeTeam;
+        // Responsabilidad del Engine: Validar la duración en minutos
+        const teamDurationMinutes = tentativeTeam.reduce(
+          (acc, emp) => acc + emp.group.hours * 60,
+          0,
+        );
+        const endMins = this.DAY_START_MINUTES + teamDurationMinutes;
+
+        // Regla 1: El equipo NUNCA debe exceder el límite de cierre (22:00 / 1320 min)
+        if (endMins <= this.DAY_END_MINUTES) {
+          // Regla 2: Si el equipo cubre 16 horas (960 min) exactas, es perfecto.
+          // Lo retornamos de inmediato para optimizar la velocidad del algoritmo.
+          if (teamDurationMinutes >= 16 * 60) {
+            return tentativeTeam;
+          }
+
+          // Regla 3: Si no cubre las 16h pero no se pasa del límite, lo guardamos
+          // temporalmente por si termina siendo la mejor combinación posible del día.
+          if (teamDurationMinutes > bestDurationMinutes) {
+            bestTeam = [...tentativeTeam];
+            bestDurationMinutes = teamDurationMinutes;
+          }
+        }
       }
     }
 
-    return [];
+    // Si iteró todas las recetas y ninguna fue perfecta, retorna la que más se acercó
+    return bestTeam;
   }
 }

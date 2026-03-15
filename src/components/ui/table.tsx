@@ -16,7 +16,10 @@ function Table({ className, containerClassName, ...props }: TableProps) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn(
+          "w-full border-separate border-spacing-0 caption-bottom text-sm",
+          className,
+        )}
         {...props}
       />
     </div>
@@ -69,12 +72,17 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead({
+  className,
+  isSticky,
+  ...props
+}: React.ComponentProps<"th"> & { isSticky?: boolean }) {
   return (
     <th
-      data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap",
+        isSticky &&
+          "sticky top-0 z-20 bg-card shadow-[inset_0_-1px_0_var(--color-border)]",
         className,
       )}
       {...props}
@@ -87,7 +95,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 *:[[role=checkbox]]:translate-y-0.5",
         className,
       )}
       {...props}

@@ -4,7 +4,7 @@ import { EmployeeFiltersDto } from "@/application/dtos/employee.dto";
 export const useFilterEmployee = () => {
   const [filters, setFilters] = useState<EmployeeFiltersDto>({
     search: "",
-    limit: 20,
+    limit: 10000,
     page: 1,
     status: "active",
     orderBy: "name",

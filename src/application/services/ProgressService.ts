@@ -6,7 +6,13 @@ export class ProgressService {
     entry: ScheduleEntry,
     now: Date,
   ): { status: Status; progress: number } {
-    const todayStr = now.toISOString().split("T")[0];
+    // Reemplazamos toISOString() por métodos locales para evitar el desfasaje UTC
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const todayStr = `${year}-${month}-${day}`;
+
+    // Obtenemos los minutos en la hora local
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     if (entry.date < todayStr) return { status: "completed", progress: 100 };
@@ -14,18 +20,17 @@ export class ProgressService {
 
     const [startH, startM] = entry.startTime.split(":").map(Number);
     const [endH, endM] = entry.endTime.split(":").map(Number);
-    let startTotal = startH * 60 + startM;
-    let endTotal = endH * 60 + endM;
-    if (endTotal < startTotal) endTotal += 1440;
+    const startTotal = startH * 60 + startM;
+    const endTotal = endH * 60 + endM;
 
+    // Ya no sumamos 1440 porque el motor garantiza que endTotal <= 1320 (22:00)
     if (currentMinutes >= endTotal)
       return { status: "completed", progress: 100 };
+
     if (currentMinutes >= startTotal) {
       const elapsed = currentMinutes - startTotal;
-      const progress = Math.min(
-        98,
-        Math.round((elapsed / (endTotal - startTotal)) * 100),
-      );
+      const duration = endTotal - startTotal;
+      const progress = Math.min(99, Math.round((elapsed / duration) * 100));
       return { status: "active", progress };
     }
 

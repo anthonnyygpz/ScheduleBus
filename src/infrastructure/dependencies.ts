@@ -13,6 +13,8 @@ import { LiveScheduleUseCase } from "@/application/use-cases/schedule/live-sched
 import { ScheduleEngine } from "@/core/logic/schedule-engine";
 import { DeterministicShuffler } from "./persistence/deterministic-shuffler.repository";
 import { DynamicRecipeProvider } from "./persistence/dynamic-recipe-provider.repository";
+import { SupabaseAbsenceRepository } from "./persistence/supabase-absence.repository";
+import { ProgressService } from "@/application/services/ProgressService";
 
 const employeeRepo = new SupbaseEmployeeRepository();
 const routeRepo = new SupabaseRouteRepository();
@@ -21,7 +23,9 @@ const scheduleRepo = new SupabaseScheduleRepository();
 const recipeProvider = new DynamicRecipeProvider();
 const shuffler = new DeterministicShuffler();
 const scheduleEngine = new ScheduleEngine(recipeProvider, shuffler);
+const absenceRepo = new SupabaseAbsenceRepository();
 
+const progressService = new ProgressService();
 const getEmployeesUseCase = new GetEmployeesUseCase(employeeRepo);
 const getRoutesUseCase = new GetRoutesUseCase(routeRepo);
 const createEmployeeUseCase = new CreateEmployeeUseCase(employeeRepo);
@@ -34,11 +38,24 @@ const generateScheduleUseCase = new GenerateScheduleUseCase(
   scheduleEngine,
   () => crypto.randomUUID(),
 );
-const getScheduleUseCase = new GetScheduleUseCase(scheduleRepo);
-const liveScheduleUseCase = new LiveScheduleUseCase(scheduleRepo);
+const getScheduleUseCase = new GetScheduleUseCase(
+  employeeRepo,
+  routeRepo,
+  absenceRepo,
+  scheduleEngine,
+  () => crypto.randomUUID(),
+);
+const liveScheduleUseCase = new LiveScheduleUseCase(
+  employeeRepo,
+  routeRepo,
+  absenceRepo,
+  scheduleEngine,
+  progressService,
+);
 
 export const getDependencies = async () => {
   return {
+    absenceRepo,
     getEmployeesUseCase,
     getRoutesUseCase,
     createEmployeeUseCase,

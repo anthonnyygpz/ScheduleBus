@@ -28,7 +28,16 @@ export const useGenerateSchedule = (weekOffset: number) => {
         );
       }
 
-      await mutate("/api/schedule");
+      // ---------------------------------------------------------
+      // SOLUCIÓN: Invalida cualquier caché relacionada con /api/schedule,
+      // sin importar los parámetros de fecha (weekStart) que tenga en la URL.
+      // ---------------------------------------------------------
+      await mutate(
+        (key: any) =>
+          typeof key === "string" && key.startsWith("/api/schedule"),
+        undefined,
+        { revalidate: true },
+      );
     } catch (err: any) {
       console.error("[useGenerateSchedule Error]:", err.message);
     } finally {

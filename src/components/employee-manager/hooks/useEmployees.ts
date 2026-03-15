@@ -11,7 +11,7 @@ export const useEmployees = (filters?: EmployeeFiltersDto) => {
 
   const params = new URLSearchParams({
     search: debouncedSearch ?? "",
-    limit: filters?.limit?.toString() ?? "10",
+    limit: filters?.limit?.toString() ?? "10000",
     page: filters?.page?.toString() ?? "1",
     orderBy: filters?.orderBy ?? "name",
     ascending: filters?.ascending?.toString() === "true" ? "true" : "false",
