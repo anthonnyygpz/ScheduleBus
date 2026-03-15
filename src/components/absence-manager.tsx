@@ -41,9 +41,6 @@ export function AbsenceManager() {
   );
   const { toast } = useToast();
 
-  console.log(history);
-
-  // 2. Estados del formulario
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [replacementId, setReplacementId] = useState(""); // 💡 Aquí se define el estado del reemplazo
   const [selectedDate, setSelectedDate] = useState(() => {
